@@ -194,3 +194,51 @@ JWT tokens issued by this service MUST include:
   "iat": "<issued-at>",
   "exp": "<expiry>"
 }
+```
+
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[📖 Documentation Index](docs/INDEX.md)** - Complete documentation navigation
+- **[🏗️ Architecture](docs/architecture/)** - Security configuration and service design
+- **[🔐 Features](docs/features/)** - Authentication, Authorization, JWT, Password Reset, Admin APIs
+- **[💻 Implementation](docs/implementation/)** - Controllers, Exception Handling, Swagger/OpenAPI
+
+### Quick Links
+- [Authentication Guide](docs/features/authentication/AUTHSERVICE_INDEX.md)
+- [RBAC Implementation](docs/features/authorization/RBAC_IMPLEMENTATION.md)
+- [JWT Quick Reference](docs/features/jwt/JWT_QUICK_REFERENCE.md)
+- [Admin APIs Quick Reference](docs/features/admin-api/ADMIN_APIS_QUICK_REFERENCE.md)
+- [Swagger UI](http://localhost:8080/swagger-ui/index.html) (when running)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Java 17+
+- MySQL 8.0+
+- Maven 3.6+
+
+### Running the Service
+```bash
+# Set environment variables
+export DB_URL=jdbc:mysql://localhost:3306/identity_service
+export DB_USERNAME=root
+export DB_PASSWORD=your_password
+export JWT_SECRET=your-secret-key
+
+# Run the service
+mvn spring-boot:run
+```
+
+### Access Swagger UI
+Once running, visit: http://localhost:8080/swagger-ui/index.html
+
+---
+
+## 📄 License
+Apache 2.0

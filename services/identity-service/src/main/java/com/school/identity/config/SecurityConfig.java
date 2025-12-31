@@ -27,7 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -52,8 +52,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // Disable CSRF (stateless JWT doesn't need it)
-            .csrf()
-                .disable()
+            .csrf(csrf -> csrf.disable())
 
             // Configure authorization rules
             .authorizeHttpRequests(authz -> authz
@@ -87,15 +86,15 @@ public class SecurityConfig {
             )
 
             // Stateless session management (JWT doesn't use sessions)
-            .sessionManagement()
+            .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+            )
 
             // Add JWT filter before Spring Security's authentication filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
             // Handle authentication errors
-            .exceptionHandling();
+            .exceptionHandling(exception -> {});
 
         return http.build();
     }
