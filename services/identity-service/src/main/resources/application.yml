@@ -36,6 +36,38 @@ server:
   compression:
     enabled: true
     min-response-size: 1024
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Swagger / OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    # Enable/disable Swagger UI (can be disabled in production)
+    enabled: ${SWAGGER_UI_ENABLED:true}
+    # Show request/response models
+    show-models: true
+    # Use model for request body
+    use-root-path: true
+    # Default models expansion depth
+    default-models-expand-depth: 1
+    # Persist auth token across page reloads
+    persist-authorization: true
+    # Display operation details on click (not on hover)
+    doc-expansion: list
+    # Show schema for request/response body
+    show-extensions: true
+    # URL to swagger.json (relative to app path)
+    url: /v3/api-docs
+
+  api-docs:
+    # Enable/disable OpenAPI JSON endpoint
+    enabled: ${OPENAPI_DOCS_ENABLED:true}
+    # Path for OpenAPI JSON
+    path: /v3/api-docs
+
+  # Show actuator endpoints in Swagger (optional)
+  show-actuator: false
 
 management:
   endpoints:
