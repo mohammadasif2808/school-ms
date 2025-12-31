@@ -12,6 +12,7 @@ import com.school.identity.service.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -157,9 +158,12 @@ public class AuthenticationController {
      *
      * GET /api/v1/auth/me
      *
+     * Requires: USER_VIEW permission
+     *
      * @param authHeader Authorization header with Bearer token
      * @return 200 OK with current user profile and permissions
      */
+    @PreAuthorize("@permissionEvaluator.hasPermission(authentication, 'USER_VIEW')")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
