@@ -63,6 +63,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
 
+                // Swagger UI and OpenAPI endpoints
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
+
                 // Health check endpoints (optional, often public)
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/actuator/info").permitAll()
@@ -71,8 +76,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/signout").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
 
-                // Deny all other requests by default
-                .anyRequest().denyAll()
+                // Admin endpoints - authentication required, authorization via @PreAuthorize
+                .requestMatchers("/api/v1/admin/**").authenticated()
+
+                // Internal endpoints - authentication required
+                .requestMatchers("/internal/**").authenticated()
+
+                // All other requests require authentication (method-level @PreAuthorize handles fine-grained access)
+                .anyRequest().authenticated()
             )
 
             // Stateless session management (JWT doesn't use sessions)
