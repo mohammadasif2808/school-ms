@@ -1,7 +1,557 @@
 openapi: 3.0.0
 info:
-  version: 1.0.0
   title: Identity Service API
-paths: {}
+  description: Central authentication, authorization, and access-control service for the School Management System
+  version: 1.0.0
+  contact:
+    name: School Management System Team
 
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.school.example.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: Public authentication endpoints
+
+paths:
+  /api/v1/auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Sign Up
+      description: User registration (create new user account)
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Validation error or password too weak
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  value:
+                    error: VALIDATION_ERROR
+                    details: "Missing required fields"
+                password_weak:
+                  value:
+                    error: PASSWORD_WEAK
+                    message: "Password must contain uppercase, lowercase, digit, and special character"
+        '409':
+          description: Conflict - Username or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                username_exists:
+                  value:
+                    error: USERNAME_EXISTS
+                    message: "Username already exists"
+                email_exists:
+                  value:
+                    error: EMAIL_EXISTS
+                    message: "Email already exists"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/signin:
+    post:
+      tags:
+        - Authentication
+      summary: Sign In
+      description: Authenticate user and issue JWT token
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResponse'
+        '400':
+          description: Validation error - missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: INVALID_CREDENTIALS
+                message: "Invalid username or password"
+        '403':
+          description: User account inactive or blocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                account_inactive:
+                  value:
+                    error: ACCOUNT_INACTIVE
+                    message: "User account is not active"
+                account_blocked:
+                  value:
+                    error: ACCOUNT_BLOCKED
+                    message: "User account is blocked"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/signout:
+    post:
+      tags:
+        - Authentication
+      summary: Sign Out
+      description: Log out user (invalidate token / handle logout)
+      operationId: signOut
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Successfully signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully signed out"
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get Current Authenticated User
+      description: Retrieve current authenticated user's profile and permissions
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  value:
+                    error: UNAUTHORIZED
+                    message: "Token required"
+                invalid_token:
+                  value:
+                    error: UNAUTHORIZED
+                    message: "Invalid or expired token"
+        '404':
+          description: User not found (token valid but user deleted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Forgot Password
+      description: Request password reset (email-based, sends reset token)
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Password reset link sent to email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset link sent to your email"
+                  email:
+                    type: string
+                    format: email
+        '400':
+          description: Validation error - missing or invalid email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset Password
+      description: Reset password using secure token (from forgot-password email)
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset successfully"
+        '400':
+          description: Validation error or password too weak or invalid/expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  value:
+                    error: VALIDATION_ERROR
+                    message: "Missing token or password"
+                password_weak:
+                  value:
+                    error: PASSWORD_WEAK
+                    message: "Password must contain uppercase, lowercase, digit, and special character"
+                invalid_token:
+                  value:
+                    error: INVALID_RESET_TOKEN
+                    message: "Token is invalid or expired"
+        '404':
+          description: Reset token not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    SignUpRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - first_name
+        - last_name
+        - phone
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Alphanumeric, hyphens, underscores allowed
+          example: john_doe
+        email:
+          type: string
+          format: email
+          description: Valid email format (RFC 5322)
+          example: john@example.com
+        password:
+          type: string
+          minLength: 8
+          description: Must contain uppercase, lowercase, digit, special character
+          example: SecureP@ss123
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: John
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Doe
+        phone:
+          type: string
+          description: Valid phone format
+          example: "+1234567890"
+
+    SignUpResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BLOCKED]
+        created_at:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BLOCKED]
+        created_at:
+          type: string
+          format: date-time
+
+    SignInRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username or email
+          example: john_doe
+        password:
+          type: string
+          example: SecureP@ss123
+
+    SignInResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/AuthenticatedUserInfo'
+
+    AuthenticatedUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BLOCKED]
+
+    CurrentUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        is_super_admin:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BLOCKED]
+        role:
+          type: string
+          description: User's assigned role
+          example: TEACHER
+        permissions:
+          type: array
+          items:
+            type: string
+          description: List of permission codes assigned to user
+          example: ["STUDENT_VIEW", "ATTENDANCE_MARK"]
+        created_at:
+          type: string
+          format: date-time
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: john@example.com
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - new_password
+      properties:
+        token:
+          type: string
+          description: Reset token from forgot-password email
+          example: "abc123def456..."
+        new_password:
+          type: string
+          minLength: 8
+          description: Must contain uppercase, lowercase, digit, special character
+          example: NewSecureP@ss456
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Error message
+          example: "Invalid input"
+        details:
+          type: object
+          description: Additional error details (optional)
+          additionalProperties: true
+
+    JWTPayload:
+      type: object
+      description: JWT token claims issued by identity-service
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        role:
+          type: string
+          description: User's primary role
+          enum: [ADMIN, TEACHER, STUDENT, GUARDIAN, ACCOUNTANT, LIBRARIAN]
+          example: TEACHER
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Fine-grained permissions assigned to user
+          example: ["STUDENT_VIEW", "ATTENDANCE_MARK"]
+        tenantId:
+          type: string
+          description: School/tenant identifier
+          example: "school-001"
+        iat:
+          type: integer
+          format: int64
+          description: Issued at (Unix timestamp)
+        exp:
+          type: integer
+          format: int64
+          description: Expiration time (Unix timestamp)
+
+  responses:
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: INTERNAL_SERVER_ERROR
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token issued by /api/v1/auth/signin endpoint
 
