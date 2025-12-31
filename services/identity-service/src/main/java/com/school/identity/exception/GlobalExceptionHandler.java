@@ -50,9 +50,9 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
             e.getErrorCode(),
-            e.getMessage(),
-            request.getDescription(false).replace("uri=", "")
+            e.getMessage()
         );
+        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
         errorResponse.setMethod(request.getDescription(false));
 
         return ResponseEntity

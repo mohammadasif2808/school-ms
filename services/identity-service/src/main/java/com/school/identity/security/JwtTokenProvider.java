@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +60,7 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .setIssuedAt(new java.util.Date(now))
                 .setExpiration(new java.util.Date(expiryTime))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .signWith(secretKey)
                 .compact();
         } catch (JwtException e) {
             throw new JwtException("JWT_GENERATION_ERROR", "Failed to generate JWT token", e);
@@ -112,7 +111,7 @@ public class JwtTokenProvider {
             throw new JwtException("TOKEN_INVALID", "Invalid token format", e);
         } catch (MalformedJwtException e) {
             throw new JwtException("TOKEN_INVALID", "Malformed token", e);
-        } catch (SignatureException e) {
+        } catch (io.jsonwebtoken.security.SignatureException e) {
             throw new JwtException("TOKEN_INVALID", "Invalid token signature", e);
         } catch (IllegalArgumentException e) {
             throw new JwtException("TOKEN_INVALID", "Token claims are empty", e);
@@ -137,7 +136,7 @@ public class JwtTokenProvider {
 
             return !claims.getExpiration().before(new java.util.Date());
         } catch (JwtException | ExpiredJwtException | UnsupportedJwtException |
-                 MalformedJwtException | SignatureException | IllegalArgumentException e) {
+                 MalformedJwtException | IllegalArgumentException e) {
             return false;
         }
     }
