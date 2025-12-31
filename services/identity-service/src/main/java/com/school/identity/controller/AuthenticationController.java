@@ -1,6 +1,8 @@
 package com.school.identity.controller;
 
 import com.school.identity.domain.User;
+import com.school.identity.dto.ForgotPasswordRequest;
+import com.school.identity.dto.ResetPasswordRequest;
 import com.school.identity.dto.SignInRequest;
 import com.school.identity.dto.SignInResponse;
 import com.school.identity.dto.SignUpRequest;
@@ -9,6 +11,7 @@ import com.school.identity.exception.AuthenticationException;
 import com.school.identity.exception.ValidationException;
 import com.school.identity.service.AuthenticationService;
 import com.school.identity.service.JwtService;
+import com.school.identity.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +32,15 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthenticationController(AuthenticationService authenticationService, JwtService jwtService) {
+    public AuthenticationController(
+            AuthenticationService authenticationService,
+            JwtService jwtService,
+            PasswordResetService passwordResetService) {
         this.authenticationService = authenticationService;
         this.jwtService = jwtService;
+        this.passwordResetService = passwordResetService;
     }
 
     /**
@@ -150,6 +158,74 @@ public class AuthenticationController {
             // 401 Unauthorized for invalid token
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(createErrorResponse("UNAUTHORIZED", "Invalid or expired token"));
+        }
+    }
+
+    /**
+     * Forgot Password - Request password reset
+     *
+     * POST /api/v1/auth/forgot-password
+     *
+     * Initiates password reset flow:
+     * 1. Find user by email
+     * 2. Generate secure reset token
+     * 3. Send reset link via email (simulated)
+     *
+     * @param forgotPasswordRequest email address
+     * @return 200 OK with success message (always, for security)
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        try {
+            // Delegate to service
+            passwordResetService.requestPasswordReset(forgotPasswordRequest);
+
+            // Always return success (don't reveal if email exists or not)
+            return ResponseEntity.ok(createMessageResponse(
+                "If an account exists with this email, a password reset link has been sent"
+            ));
+        } catch (Exception e) {
+            // Log error but return generic success message for security
+            // (prevent email enumeration attacks)
+            return ResponseEntity.ok(createMessageResponse(
+                "If an account exists with this email, a password reset link has been sent"
+            ));
+        }
+    }
+
+    /**
+     * Reset Password - Complete password reset
+     *
+     * POST /api/v1/auth/reset-password
+     *
+     * Completes password reset flow:
+     * 1. Validate reset token (not expired, not used)
+     * 2. Validate new password strength
+     * 3. Hash new password
+     * 4. Update user password
+     * 5. Mark token as used (single-use enforcement)
+     *
+     * @param resetPasswordRequest reset token and new password
+     * @return 200 OK with success message
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        try {
+            // Delegate to service
+            passwordResetService.resetPassword(resetPasswordRequest);
+
+            // Return success response
+            return ResponseEntity.ok(createMessageResponse(
+                "Password has been reset successfully. You can now sign in with your new password"
+            ));
+        } catch (ValidationException e) {
+            // 400 Bad Request for validation errors
+            return ResponseEntity.badRequest()
+                .body(createErrorResponse(e.getErrorCode(), e.getMessage()));
+        } catch (Exception e) {
+            // 500 Internal Server Error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred"));
         }
     }
 

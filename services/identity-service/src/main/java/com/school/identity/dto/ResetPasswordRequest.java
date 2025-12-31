@@ -3,22 +3,25 @@ package com.school.identity.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Request for reset password endpoint
+ */
 public class ResetPasswordRequest {
 
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "Reset token is required")
     private String token;
 
     @NotBlank(message = "New password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    private String new_password;
+    private String newPassword;
 
     // Constructors
     public ResetPasswordRequest() {
     }
 
-    public ResetPasswordRequest(String token, String new_password) {
+    public ResetPasswordRequest(String token, String newPassword) {
         this.token = token;
-        this.new_password = new_password;
+        this.newPassword = newPassword;
     }
 
     // Getters and Setters
@@ -30,12 +33,12 @@ public class ResetPasswordRequest {
         this.token = token;
     }
 
-    public String getNew_password() {
-        return new_password;
+    public String getNewPassword() {
+        return newPassword;
     }
 
-    public void setNew_password(String new_password) {
-        this.new_password = new_password;
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
     }
 }
 
