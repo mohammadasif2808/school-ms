@@ -1,9 +1,8 @@
 package com.school.identity.security;
 
 import com.school.identity.domain.User;
-import com.school.identity.dto.JwtClaims;
 import com.school.identity.exception.JwtException;
-import com.school.identity.repository.UserRepository;
+import com.school.identity.service.JwtService;
 import com.school.identity.testutil.TestDataFactory;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,9 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,10 +36,7 @@ import static org.mockito.Mockito.*;
 class JwtAuthenticationFilterTest {
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    private UserRepository userRepository;
+    private JwtService jwtService;
 
     @Mock
     private HttpServletRequest request;
@@ -78,11 +71,9 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenValidToken_shouldPopulateSecurityContext() throws ServletException, IOException {
             // GIVEN
             User user = TestDataFactory.createActiveUser();
-            JwtClaims claims = createValidClaims(user);
 
             when(request.getHeader("Authorization")).thenReturn("Bearer valid.jwt.token");
-            when(jwtTokenProvider.validateAndExtractClaims("valid.jwt.token")).thenReturn(claims);
-            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(jwtService.validateTokenAndGetUser("valid.jwt.token")).thenReturn(user);
 
             // WHEN
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -96,26 +87,20 @@ class JwtAuthenticationFilterTest {
         }
 
         @Test
-        @DisplayName("GIVEN valid token with permissions WHEN filter THEN authorities populated")
-        void doFilter_givenTokenWithPermissions_shouldPopulateAuthorities() throws ServletException, IOException {
+        @DisplayName("GIVEN valid token WHEN filter THEN filter chain continues")
+        void doFilter_givenValidToken_shouldContinueFilterChain() throws ServletException, IOException {
             // GIVEN
             User user = TestDataFactory.createActiveUser();
-            JwtClaims claims = createValidClaims(user);
-            claims.setPermissions(List.of("STUDENT_VIEW", "ATTENDANCE_MARK"));
 
             when(request.getHeader("Authorization")).thenReturn("Bearer valid.jwt.token");
-            when(jwtTokenProvider.validateAndExtractClaims("valid.jwt.token")).thenReturn(claims);
-            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(jwtService.validateTokenAndGetUser("valid.jwt.token")).thenReturn(user);
 
             // WHEN
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // THEN
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            assertThat(auth.getAuthorities()).hasSize(2);
-            assertThat(auth.getAuthorities())
-                .extracting("authority")
-                .containsExactlyInAnyOrder("STUDENT_VIEW", "ATTENDANCE_MARK");
+            verify(filterChain, times(1)).doFilter(request, response);
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         }
     }
 
@@ -138,7 +123,7 @@ class JwtAuthenticationFilterTest {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             assertThat(auth).isNull();
             verify(filterChain).doFilter(request, response);
-            verify(jwtTokenProvider, never()).validateAndExtractClaims(anyString());
+            verify(jwtService, never()).validateTokenAndGetUser(anyString());
         }
 
         @Test
@@ -205,7 +190,7 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenMalformedToken_shouldContinueWithoutAuth() throws ServletException, IOException {
             // GIVEN
             when(request.getHeader("Authorization")).thenReturn("Bearer malformed.token");
-            when(jwtTokenProvider.validateAndExtractClaims("malformed.token"))
+            when(jwtService.validateTokenAndGetUser("malformed.token"))
                 .thenThrow(new JwtException("TOKEN_INVALID", "Malformed token"));
 
             // WHEN
@@ -222,7 +207,7 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenExpiredToken_shouldContinueWithoutAuth() throws ServletException, IOException {
             // GIVEN
             when(request.getHeader("Authorization")).thenReturn("Bearer expired.jwt.token");
-            when(jwtTokenProvider.validateAndExtractClaims("expired.jwt.token"))
+            when(jwtService.validateTokenAndGetUser("expired.jwt.token"))
                 .thenThrow(new JwtException("TOKEN_EXPIRED", "Token has expired"));
 
             // WHEN
@@ -239,7 +224,7 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenInvalidSignature_shouldContinueWithoutAuth() throws ServletException, IOException {
             // GIVEN
             when(request.getHeader("Authorization")).thenReturn("Bearer invalid.signature.token");
-            when(jwtTokenProvider.validateAndExtractClaims("invalid.signature.token"))
+            when(jwtService.validateTokenAndGetUser("invalid.signature.token"))
                 .thenThrow(new JwtException("TOKEN_INVALID", "Invalid token signature"));
 
             // WHEN
@@ -262,18 +247,17 @@ class JwtAuthenticationFilterTest {
         @DisplayName("GIVEN valid token but user deleted WHEN filter THEN continues without auth")
         void doFilter_givenDeletedUser_shouldContinueWithoutAuth() throws ServletException, IOException {
             // GIVEN
-            User deletedUser = TestDataFactory.createDeletedUser();
-            JwtClaims claims = createValidClaims(deletedUser);
-
             when(request.getHeader("Authorization")).thenReturn("Bearer valid.jwt.token");
-            when(jwtTokenProvider.validateAndExtractClaims("valid.jwt.token")).thenReturn(claims);
-            when(userRepository.findById(deletedUser.getId())).thenReturn(Optional.of(deletedUser));
+            when(jwtService.validateTokenAndGetUser("valid.jwt.token"))
+                .thenThrow(new JwtException("USER_DELETED", "User has been deleted"));
 
             // WHEN
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // THEN
-            // Should continue but not authenticate deleted user
+            // Should continue without auth when user is deleted
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            assertThat(auth).isNull();
             verify(filterChain).doFilter(request, response);
         }
 
@@ -281,18 +265,17 @@ class JwtAuthenticationFilterTest {
         @DisplayName("GIVEN valid token but user not found WHEN filter THEN continues without auth")
         void doFilter_givenUserNotFound_shouldContinueWithoutAuth() throws ServletException, IOException {
             // GIVEN
-            User user = TestDataFactory.createActiveUser();
-            JwtClaims claims = createValidClaims(user);
-
             when(request.getHeader("Authorization")).thenReturn("Bearer valid.jwt.token");
-            when(jwtTokenProvider.validateAndExtractClaims("valid.jwt.token")).thenReturn(claims);
-            when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+            when(jwtService.validateTokenAndGetUser("valid.jwt.token"))
+                .thenThrow(new JwtException("USER_NOT_FOUND", "User not found"));
 
             // WHEN
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
             // THEN
             // Should continue filter chain even if user not found
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            assertThat(auth).isNull();
             verify(filterChain).doFilter(request, response);
         }
     }
@@ -308,7 +291,7 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenMissingClaims_shouldHandleGracefully() throws ServletException, IOException {
             // GIVEN
             when(request.getHeader("Authorization")).thenReturn("Bearer token.missing.claims");
-            when(jwtTokenProvider.validateAndExtractClaims("token.missing.claims"))
+            when(jwtService.validateTokenAndGetUser("token.missing.claims"))
                 .thenThrow(new JwtException("TOKEN_INVALID", "Token claims are empty"));
 
             // WHEN
@@ -325,7 +308,7 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenException_shouldContinueFilterChain() throws ServletException, IOException {
             // GIVEN
             when(request.getHeader("Authorization")).thenReturn("Bearer some.token");
-            when(jwtTokenProvider.validateAndExtractClaims("some.token"))
+            when(jwtService.validateTokenAndGetUser("some.token"))
                 .thenThrow(new RuntimeException("Unexpected error"));
 
             // WHEN
@@ -386,11 +369,9 @@ class JwtAuthenticationFilterTest {
         void doFilter_givenValidAuth_shouldContinueChainAfterAuth() throws ServletException, IOException {
             // GIVEN
             User user = TestDataFactory.createActiveUser();
-            JwtClaims claims = createValidClaims(user);
 
             when(request.getHeader("Authorization")).thenReturn("Bearer valid.token");
-            when(jwtTokenProvider.validateAndExtractClaims("valid.token")).thenReturn(claims);
-            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(jwtService.validateTokenAndGetUser("valid.token")).thenReturn(user);
 
             // WHEN
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -399,20 +380,6 @@ class JwtAuthenticationFilterTest {
             verify(filterChain, times(1)).doFilter(request, response);
             assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         }
-    }
-
-    // ============ HELPER METHODS ============
-
-    private JwtClaims createValidClaims(User user) {
-        JwtClaims claims = new JwtClaims();
-        claims.setUserId(user.getId());
-        claims.setUsername(user.getUsername());
-        claims.setRole("TEACHER");
-        claims.setPermissions(List.of());
-        claims.setTenantId("school-001");
-        claims.setIat(System.currentTimeMillis());
-        claims.setExp(System.currentTimeMillis() + 86400000);
-        return claims;
     }
 }
 

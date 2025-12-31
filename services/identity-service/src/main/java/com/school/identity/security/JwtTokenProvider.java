@@ -126,6 +126,10 @@ public class JwtTokenProvider {
      */
     public boolean isTokenValid(String token) {
         try {
+            if (token == null || token.isEmpty()) {
+                return false;
+            }
+
             String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;
 
             Claims claims = Jwts.parserBuilder()

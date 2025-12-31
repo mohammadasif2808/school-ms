@@ -38,7 +38,8 @@ class GlobalExceptionHandlerTest {
     void setUp() {
         exceptionHandler = new GlobalExceptionHandler();
         webRequest = mock(WebRequest.class);
-        when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/test");
+        // Use lenient stubbing - some tests don't use webRequest but it's set up globally
+        lenient().when(webRequest.getDescription(false)).thenReturn("uri=/api/v1/test");
     }
 
     // ============ VALIDATION EXCEPTION TESTS ============
@@ -204,7 +205,7 @@ class GlobalExceptionHandlerTest {
         void handleNoHandlerFoundException_shouldReturn404() {
             // GIVEN
             NoHandlerFoundException exception = new NoHandlerFoundException(
-                "GET", "/api/v1/nonexistent", null);
+                "GET", "/api/v1/nonexistent", org.springframework.http.HttpHeaders.EMPTY);
 
             // WHEN
             ResponseEntity<ErrorResponse> response = exceptionHandler.handleNoHandlerFoundException(exception, webRequest);
@@ -222,7 +223,7 @@ class GlobalExceptionHandlerTest {
         void handleNoHandlerFoundException_shouldIncludeMethodAndPath() {
             // GIVEN
             NoHandlerFoundException exception = new NoHandlerFoundException(
-                "POST", "/api/v1/invalid", null);
+                "POST", "/api/v1/invalid", org.springframework.http.HttpHeaders.EMPTY);
 
             // WHEN
             ResponseEntity<ErrorResponse> response = exceptionHandler.handleNoHandlerFoundException(exception, webRequest);

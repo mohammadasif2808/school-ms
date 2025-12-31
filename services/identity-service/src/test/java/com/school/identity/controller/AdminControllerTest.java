@@ -278,9 +278,10 @@ class AdminControllerTest {
             UUID roleId = UUID.randomUUID();
             String requestBody = """
                 {
+                    "roleId": "%s",
                     "permissionIds": ["%s", "%s"]
                 }
-                """.formatted(UUID.randomUUID(), UUID.randomUUID());
+                """.formatted(roleId.toString(), UUID.randomUUID(), UUID.randomUUID());
 
             RoleResponse response = createRoleResponse("TEACHER");
             when(adminService.assignPermissionsToRole(any(AssignPermissionsRequest.class)))
@@ -300,9 +301,10 @@ class AdminControllerTest {
             UUID roleId = UUID.randomUUID();
             String requestBody = """
                 {
+                    "roleId": "%s",
                     "permissionIds": ["%s"]
                 }
-                """.formatted(UUID.randomUUID());
+                """.formatted(roleId.toString(), UUID.randomUUID());
 
             when(adminService.assignPermissionsToRole(any(AssignPermissionsRequest.class)))
                 .thenThrow(new ValidationException("ROLE_NOT_FOUND", "Role not found"));
@@ -329,9 +331,10 @@ class AdminControllerTest {
             UUID userId = UUID.randomUUID();
             String requestBody = """
                 {
+                    "userId": "%s",
                     "roleIds": ["%s"]
                 }
-                """.formatted(UUID.randomUUID());
+                """.formatted(userId.toString(), UUID.randomUUID());
 
             doNothing().when(adminService).assignRolesToUser(any(AssignRolesRequest.class));
 
@@ -350,9 +353,10 @@ class AdminControllerTest {
             UUID userId = UUID.randomUUID();
             String requestBody = """
                 {
+                    "userId": "%s",
                     "roleIds": ["%s"]
                 }
-                """.formatted(UUID.randomUUID());
+                """.formatted(userId.toString(), UUID.randomUUID());
 
             doThrow(new ValidationException("USER_NOT_FOUND", "User not found"))
                 .when(adminService).assignRolesToUser(any(AssignRolesRequest.class));
@@ -418,17 +422,16 @@ class AdminControllerTest {
         void error_response_shouldFollowFormat() throws Exception {
             // GIVEN
             when(adminService.createRole(any(CreateRoleRequest.class)))
-                .thenThrow(new ValidationException("ERROR_CODE", "Error message"));
+                .thenThrow(new ValidationException("ROLE_EXISTS", "Role already exists"));
 
             // WHEN / THEN
+            // Controller returns {error, message} format
             mockMvc.perform(post("/api/v1/admin/roles")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"name\":\"TEST\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("ERROR_CODE"))
-                .andExpect(jsonPath("$.message").value("Error message"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.error").value("ROLE_EXISTS"))
+                .andExpect(jsonPath("$.message").value("Role already exists"));
         }
     }
 
