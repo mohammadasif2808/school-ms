@@ -21,3 +21,18 @@ Purpose: Train AI to behave predictably.
 - DTO validation
 - Service-level transactions
 - Thin controllers
+
+## Observed AI Mistakes
+
+### Database Assumptions
+- AI assumed PostgreSQL without being instructed
+- Project standard is MySQL
+
+Rule:
+- AI must NOT assume a database
+- If unspecified, default to MySQL
+- Prefer environment-variable-based configuration
+
+Action:
+- Always restate DB choice at the start of a session
+
