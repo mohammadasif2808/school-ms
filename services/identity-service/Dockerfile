@@ -20,18 +20,25 @@ WORKDIR /app
 # Copy only the built JAR from builder (smaller final image)
 COPY --from=builder /build/target/identity-service-1.0.0.jar app.jar
 
+# Copy wait-for-mysql script
+COPY wait-for-mysql.sh /app/wait-for-mysql.sh
+RUN chmod +x /app/wait-for-mysql.sh
+
 # Health check configuration
-# - Checks every 30 seconds
-# - Waits 10 seconds before first check
-# - Times out if no response in 3 seconds
-# - Considers healthy after 1 successful response
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=120s --retries=5 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # Expose port 8080 for the API
 EXPOSE 8080
 
-# Run the application
-# -Xmx256m: Limit heap to 256MB (per architecture guidelines)
-# Note: Environment variables are injected at runtime via docker-compose
-ENTRYPOINT ["java", "-Xmx256m", "-jar", "app.jar"]
+# Create entrypoint wrapper script
+RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
+    echo 'set -e' >> /app/entrypoint.sh && \
+    echo 'echo "🚀 Starting identity-service..."' >> /app/entrypoint.sh && \
+    echo 'echo "⏳ Waiting for MySQL to be ready..."' >> /app/entrypoint.sh && \
+    echo './wait-for-mysql.sh mysql 3306 identity_user identity_password 120 || exit 1' >> /app/entrypoint.sh && \
+    echo 'echo "✅ MySQL is ready, starting Spring Boot..."' >> /app/entrypoint.sh && \
+    echo 'exec java -Xmx256m -jar app.jar' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
