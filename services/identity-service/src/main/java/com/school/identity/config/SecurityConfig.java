@@ -1,6 +1,7 @@
 package com.school.identity.config;
 
 import com.school.identity.security.JwtAuthenticationFilter;
+import com.school.identity.security.JwtAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,9 +32,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                         JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 
     /**
@@ -93,8 +97,10 @@ public class SecurityConfig {
             // Add JWT filter before Spring Security's authentication filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-            // Handle authentication errors
-            .exceptionHandling(exception -> {});
+            // Handle authentication errors - return 401 Unauthorized
+            .exceptionHandling(exception ->
+                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+            );
 
         return http.build();
     }

@@ -93,6 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Continue filter chain
             // Spring Security will reject request if endpoint requires authentication
+            // Our JwtAuthenticationEntryPoint will return 401 Unauthorized
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
