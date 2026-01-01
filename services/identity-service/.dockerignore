@@ -1,0 +1,43 @@
+# Maven
+target/
+.m2/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+*.log
+*.out
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project
+docker-compose.yml
+init.sql
+.dockerignore
+Dockerfile
+README.md
+docs/
+
+# Test files
+*Test.java
+*Tests.java
+src/test/
+
+# Temporary files
+temp_extract/
+.temp/
+*.tmp
+

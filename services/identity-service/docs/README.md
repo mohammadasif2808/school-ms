@@ -1,174 +1,203 @@
 # Identity Service Documentation
 
-Welcome to the Identity Service documentation! This directory contains comprehensive documentation for the authentication, authorization, and access control service.
+Complete documentation for identity-service is organized by role and topic.
+
+## Quick Navigation
+
+### For Frontend Developers
+
+**Just starting?**
+1. Read [../START_HERE.md](../START_HERE.md) (5 minutes)
+2. Follow [frontend/SETUP.md](frontend/SETUP.md) (15 minutes)
+3. Keep [frontend/QUICK_REFERENCE.md](frontend/QUICK_REFERENCE.md) handy
+
+**Getting stuck?**
+→ See [frontend/TROUBLESHOOTING.md](frontend/TROUBLESHOOTING.md)
+
+**Need API docs?**
+→ Open Swagger UI at http://localhost:8080/swagger-ui/index.html
+
+### For Backend Developers
+
+**Understanding the system?**
+1. Read [../README.md](../README.md) (overview)
+2. Review [architecture/](architecture/) (design decisions)
+3. Check [implementation/](implementation/) (how things work)
+
+**Implementing features?**
+→ See [implementation/](implementation/) guides
+
+### For DevOps / Deployment
+
+**First time deploying?**
+1. Read [deployment/DOCKER_GUIDE.md](deployment/DOCKER_GUIDE.md)
+2. Use [deployment/CHECKLIST.md](deployment/CHECKLIST.md)
+
+**Need to debug Docker?**
+→ See [deployment/DOCKER_GUIDE.md](deployment/DOCKER_GUIDE.md) troubleshooting section
 
 ---
 
-## 🚀 Quick Start
+## Documentation Structure
 
-### New to the service?
-1. Read the main [README.md](../README.md) in the service root
-2. Browse this [INDEX.md](INDEX.md) for complete documentation navigation
-3. Check [Swagger UI](http://localhost:8080/swagger-ui/index.html) when the service is running
-
-### Looking for something specific?
-- **Authentication?** → [features/authentication/](features/authentication/)
-- **RBAC & Permissions?** → [features/authorization/](features/authorization/)
-- **JWT Tokens?** → [features/jwt/](features/jwt/)
-- **Password Reset?** → [features/password-reset/](features/password-reset/)
-- **Admin APIs?** → [features/admin-api/](features/admin-api/)
-- **Security Config?** → [architecture/](architecture/)
-- **API Endpoints?** → [implementation/](implementation/)
-
----
-
-## 📚 Documentation Categories
-
-### [🏗️ Architecture](architecture/)
-Core architectural decisions, security configuration, and service design.
-- Security architecture and configuration
-- Spring Security setup
-- Service structure and skeleton
-
-### [🔐 Features](features/)
-Feature-specific documentation organized by functional area.
-- **[Authentication](features/authentication/)** - Sign up, sign in, sign out, password reset
-- **[Authorization (RBAC)](features/authorization/)** - Roles, permissions, access control
-- **[JWT](features/jwt/)** - Token generation, validation, refresh
-- **[Password Reset](features/password-reset/)** - Forgot/reset password flow
-- **[Admin APIs](features/admin-api/)** - Role and permission management
-
-### [💻 Implementation](implementation/)
-Technical implementation details for controllers, exception handling, and API documentation.
-- Controller implementation and endpoints
-- Global exception handling
-- Swagger/OpenAPI documentation
-
----
-
-## 📖 Documentation Index
-
-**[→ View Complete Documentation Index](INDEX.md)**
-
-The index provides:
-- Full list of all documentation files
-- Descriptions of each document
-- Navigation between related documents
-- Quick links to common topics
-
----
-
-## 📝 Documentation Conventions
-
-### File Naming
-- `*_INDEX.md` - Overview and navigation for a topic
-- `*_ARCHITECTURE.md` - Architecture and design decisions
-- `*_IMPLEMENTATION.md` - Detailed implementation guide
-- `*_INTEGRATION_GUIDE.md` - How to integrate/use the feature
-- `*_QUICK_REFERENCE.md` - Quick lookup reference
-- `*_COMPLETION_SUMMARY.md` - Implementation status and checklist
-- `README.md` - Directory overview and navigation
-
-### Directory Structure
 ```
-docs/
-├── INDEX.md                    # Master documentation index
-├── README.md                   # This file
-├── ORGANIZATION_SUMMARY.md     # How docs are organized
-├── architecture/               # Architectural documentation
-├── features/                   # Feature-specific documentation
-│   ├── authentication/
-│   ├── authorization/
-│   ├── jwt/
-│   ├── password-reset/
-│   └── admin-api/
-└── implementation/             # Implementation documentation
+identity-service/
+├── START_HERE.md                    ← All developers start here
+├── README.md                        ← Project overview
+├── DOCS_ORGANIZATION.md             ← This structure explained
+├── docker-compose.yml               ← Docker setup
+├── Dockerfile                       ← Build definition
+├── init.sql                         ← Database schema
+│
+└── docs/
+    ├── frontend/                    ← For frontend team
+    │   ├── SETUP.md                 ← How to start backend
+    │   ├── QUICK_REFERENCE.md       ← Common commands & APIs
+    │   └── TROUBLESHOOTING.md       ← Common issues & fixes
+    │
+    ├── deployment/                  ← For DevOps team
+    │   ├── DOCKER_GUIDE.md          ← Docker architecture & config
+    │   └── CHECKLIST.md             ← Pre-deployment verification
+    │
+    ├── architecture/                ← Design & decisions
+    │   ├── README.md
+    │   └── *.md files
+    │
+    ├── implementation/              ← Implementation guides
+    │   ├── README.md
+    │   ├── CONTROLLER_*.md
+    │   └── ...
+    │
+    └── guides/                      ← General guides
+        └── ...
 ```
 
 ---
 
-## 🎯 Common Use Cases
+## Common Tasks
 
-### I want to understand how authentication works
-1. Go to [features/authentication/](features/authentication/)
-2. Start with the README or AUTHSERVICE_INDEX.md
-3. Review the architecture and implementation docs
+### "I want to start the backend"
+→ [START_HERE.md](../START_HERE.md)
 
-### I need to integrate with the admin APIs
-1. Go to [features/admin-api/](features/admin-api/)
-2. Read the ADMIN_APIS_INTEGRATION_GUIDE.md
-3. Use ADMIN_APIS_QUICK_REFERENCE.md for API details
+### "I need to make an API call"
+→ [frontend/QUICK_REFERENCE.md](frontend/QUICK_REFERENCE.md)
 
-### I want to understand JWT token handling
-1. Go to [features/jwt/](features/jwt/)
-2. Read JWT_ARCHITECTURE.md for design
-3. Check JWT_IMPLEMENTATION.md for code details
+### "My backend won't start"
+→ [frontend/TROUBLESHOOTING.md](frontend/TROUBLESHOOTING.md)
 
-### I need to configure security
-1. Go to [architecture/](architecture/)
-2. Read SECURITY_CONFIG_IMPLEMENTATION.md
-3. Review SECURITY_INTEGRATION_GUIDE.md
+### "I need to deploy this"
+→ [deployment/DOCKER_GUIDE.md](deployment/DOCKER_GUIDE.md)
 
-### I want to see all available endpoints
-1. Go to [implementation/](implementation/)
-2. Check CONTROLLER_QUICK_REFERENCE.md
-3. Or visit [Swagger UI](http://localhost:8080/swagger-ui/index.html)
+### "I need to verify before deployment"
+→ [deployment/CHECKLIST.md](deployment/CHECKLIST.md)
+
+### "I need to understand the architecture"
+→ [architecture/](architecture/)
+
+### "I need to implement a feature"
+→ [implementation/](implementation/)
 
 ---
 
-## 🔗 External Resources
+## Files at Root Level
 
-- [Main Project Docs](../../../docs/) - Overall project documentation
-- [API Contract](../../../docs/api-contracts/identity-service.yaml) - OpenAPI specification
-- [Architecture Decisions](../../../docs/decisions/) - Project ADRs
-- [Service README](../README.md) - Service overview
+These files are at `services/identity-service/` (root):
 
----
-
-## 🤝 Contributing to Documentation
-
-### Adding New Documentation
-1. Place it in the appropriate category folder
-2. Follow the naming conventions above
-3. Update the [INDEX.md](INDEX.md) file
-4. Add cross-references to related docs
-5. Update the directory README if adding a new category
-
-### Updating Existing Documentation
-1. Maintain consistency with existing style
-2. Update "Last Updated" dates
-3. Update cross-references if structure changes
-4. Keep examples current with code
+- **START_HERE.md** - Quick start guide (all developers)
+- **README.md** - Project overview
+- **docker-compose.yml** - Docker orchestration
+- **Dockerfile** - Application build
+- **init.sql** - Database initialization
+- **.env.example** - Environment variables template
+- **health-check.sh / health-check.bat** - Service verification
+- **DOCS_ORGANIZATION.md** - How documentation is organized
 
 ---
 
-## 📊 Documentation Statistics
+## Key Directories
 
-- **Total Documentation Files:** 40+ files
-- **Categories:** 3 main categories (Architecture, Features, Implementation)
-- **Feature Areas:** 5 feature areas documented
-- **Navigation Files:** 8 README/INDEX files
-- **Organization Status:** ✅ Complete
+### docs/frontend/
+- **SETUP.md** - How to start and use the backend
+- **QUICK_REFERENCE.md** - Commands and API endpoints
+- **TROUBLESHOOTING.md** - Common issues and solutions
 
-For detailed organization information, see [ORGANIZATION_SUMMARY.md](ORGANIZATION_SUMMARY.md)
+### docs/deployment/
+- **DOCKER_GUIDE.md** - Docker architecture and configuration
+- **CHECKLIST.md** - Pre-deployment verification
 
----
+### docs/architecture/
+- Decision records
+- Security configuration
+- System design
 
-## 📞 Need Help?
-
-1. **Quick answers?** Check Quick Reference guides
-2. **Integration help?** Read Integration Guides
-3. **Understanding design?** Review Architecture docs
-4. **Code details?** See Implementation docs
-5. **API testing?** Use [Swagger UI](http://localhost:8080/swagger-ui/index.html)
-
----
-
-**Last Updated:** January 1, 2026  
-**Version:** 1.0.0  
-**Status:** ✅ Fully Organized
+### docs/implementation/
+- Controller guides
+- Service implementation
+- Database schema
+- API contract
 
 ---
 
-[→ Browse Complete Documentation Index](INDEX.md)
+## Access Points
+
+Once backend is running:
+
+| Resource | URL |
+|----------|-----|
+| API Base | http://localhost:8080 |
+| Swagger UI (API Docs) | http://localhost:8080/swagger-ui/index.html |
+| Health Check | http://localhost:8080/actuator/health |
+
+---
+
+## Quick Commands
+
+```bash
+# Start backend (from identity-service directory)
+docker compose up
+
+# View logs
+docker compose logs -f identity-service
+
+# Stop backend (data persists)
+docker compose down
+
+# Reset database (delete all data)
+docker compose down -v
+
+# Verify health
+./health-check.sh  (or health-check.bat on Windows)
+```
+
+---
+
+## Support Flowchart
+
+```
+Need help?
+    ↓
+What's your role?
+    ├─ Frontend Developer → START_HERE.md → docs/frontend/
+    ├─ Backend Developer → README.md → docs/implementation/
+    ├─ DevOps → docs/deployment/DOCKER_GUIDE.md
+    └─ Architect → docs/architecture/
+```
+
+---
+
+## Recent Changes
+
+All documentation has been reorganized into role-based folders:
+
+- ✅ Frontend docs moved to `docs/frontend/`
+- ✅ Deployment docs moved to `docs/deployment/`
+- ✅ Navigation simplified with README pointers
+- ✅ Quick references consolidated
+- ✅ Troubleshooting guides organized
+
+See [../DOCS_ORGANIZATION.md](../DOCS_ORGANIZATION.md) for details.
+
+---
+
+**Start here:** [../START_HERE.md](../START_HERE.md)
 
