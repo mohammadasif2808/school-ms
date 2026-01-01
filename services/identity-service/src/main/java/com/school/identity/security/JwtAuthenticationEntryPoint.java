@@ -31,7 +31,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("error", "unauthorized");
+        body.put("error", "UNAUTHORIZED");
         body.put("message", "Full authentication is required to access this resource");
         body.put("path", request.getServletPath());
 

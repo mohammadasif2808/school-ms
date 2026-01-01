@@ -234,12 +234,11 @@ public class AuthenticationController {
      *
      * GET /api/v1/auth/me
      *
-     * Requires: USER_VIEW permission
+     * No special permission required - authenticated users can view their own profile
      *
      * @param authHeader Authorization header with Bearer token
      * @return 200 OK with current user profile and permissions
      */
-    @PreAuthorize("@permissionEvaluator.hasPermission(authentication, 'USER_VIEW')")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {

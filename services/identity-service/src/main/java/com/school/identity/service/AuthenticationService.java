@@ -67,7 +67,12 @@ public class AuthenticationService {
 
         // New users are ACTIVE by default
         user.setStatus(UserStatus.ACTIVE);
-        user.setIsSuperAdmin(false);
+
+        // Make first user in system a super admin (appropriate for initial setup)
+        // Note: This is checked before saving, so first user will always be super admin
+        long existingUserCount = userRepository.count();
+        user.setIsSuperAdmin(existingUserCount == 0);
+
         user.setIsDeleted(false);
 
         return userRepository.save(user);
@@ -89,14 +94,14 @@ public class AuthenticationService {
             .or(() -> userRepository.findByEmail(signInRequest.getUsername()));
 
         if (userOptional.isEmpty()) {
-            throw new AuthenticationException("INVALID_CREDENTIALS", "Invalid username or password");
+            throw new AuthenticationException("INVALID_CREDENTIALS", "invalid_credentials");
         }
 
         User user = userOptional.get();
 
         // Check if user is soft-deleted
         if (user.getIsDeleted()) {
-            throw new AuthenticationException("INVALID_CREDENTIALS", "Invalid username or password");
+            throw new AuthenticationException("INVALID_CREDENTIALS", "invalid_credentials");
         }
 
         // Check user status
@@ -104,7 +109,7 @@ public class AuthenticationService {
 
         // Verify password
         if (!passwordEncoder.matches(signInRequest.getPassword(), user.getPasswordHash())) {
-            throw new AuthenticationException("INVALID_CREDENTIALS", "Invalid username or password");
+            throw new AuthenticationException("INVALID_CREDENTIALS", "invalid_credentials");
         }
 
         return user;
@@ -180,7 +185,7 @@ public class AuthenticationService {
         }
 
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
-            throw new ValidationException("PASSWORD_WEAK",
+            throw new ValidationException("VALIDATION_ERROR",
                 "Password must contain uppercase, lowercase, digit, and special character");
         }
     }
