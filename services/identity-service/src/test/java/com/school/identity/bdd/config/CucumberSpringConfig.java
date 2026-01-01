@@ -1,36 +1,23 @@
 package com.school.identity.bdd.config;
 
-import com.school.identity.bdd.client.IdentityApiClient;
-import com.school.identity.bdd.context.ScenarioContext;
+import com.school.identity.IdentityServiceApplication;
 import io.cucumber.spring.CucumberContextConfiguration;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
+import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Cucumber Spring Configuration
  *
- * Provides dependency injection for step definitions
+ * Configures Spring Boot test context for Cucumber.
+ * Explicitly loads BddBeanConfiguration to provide test beans.
+ * Uses RANDOM_PORT to avoid port conflicts.
  */
+@SpringBootTest(
+    classes = {IdentityServiceApplication.class, BddBeanConfiguration.class},
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
 @CucumberContextConfiguration
-@TestConfiguration
 public class CucumberSpringConfig {
-
-    /**
-     * Scenario-scoped context (new instance for each scenario)
-     */
-    @Bean
-    @Scope("cucumber-glue")
-    public ScenarioContext scenarioContext() {
-        return new ScenarioContext();
-    }
-
-    /**
-     * API Client (singleton, stateless)
-     */
-    @Bean
-    public IdentityApiClient identityApiClient() {
-        return new IdentityApiClient();
-    }
+    // No bean definitions here - they're in BddBeanConfiguration
+    // This class only serves to load the Spring context for Cucumber
 }
 

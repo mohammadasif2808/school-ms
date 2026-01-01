@@ -14,12 +14,20 @@ import io.restassured.specification.RequestSpecification;
 public class RestAssuredConfig {
 
     // Service configuration (can be overridden via environment variables)
-    private static final String BASE_URL = System.getenv().getOrDefault(
+    private static String BASE_URL = System.getenv().getOrDefault(
         "IDENTITY_SERVICE_URL", "http://localhost:8080");
 
     private static final String API_BASE_PATH = "/api/v1";
 
     private static boolean configured = false;
+
+    /**
+     * Set the base URL dynamically (used for RANDOM_PORT in tests)
+     */
+    public static void setBaseUrl(String url) {
+        BASE_URL = url;
+        configured = false; // Reset configuration flag so it reconfigures with new URL
+    }
 
     /**
      * Initialize REST Assured configuration (call once before tests)
