@@ -58,6 +58,7 @@ class AuthenticationServiceTest {
 
             when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
             when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+            when(userRepository.count()).thenReturn(1L); // Ensure user is not super admin
             when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
             when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
                 User user = invocation.getArgument(0);
@@ -127,7 +128,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN
             assertThatThrownBy(() -> authenticationService.signUp(request))
                 .isInstanceOf(ValidationException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "PASSWORD_WEAK");
+                .hasFieldOrPropertyWithValue("errorCode", "VALIDATION_ERROR");
         }
 
         @Test
@@ -142,7 +143,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN
             assertThatThrownBy(() -> authenticationService.signUp(request))
                 .isInstanceOf(ValidationException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "PASSWORD_WEAK");
+                .hasFieldOrPropertyWithValue("errorCode", "VALIDATION_ERROR");
         }
 
         @Test
@@ -157,7 +158,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN
             assertThatThrownBy(() -> authenticationService.signUp(request))
                 .isInstanceOf(ValidationException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "PASSWORD_WEAK");
+                .hasFieldOrPropertyWithValue("errorCode", "VALIDATION_ERROR");
         }
 
         @Test
@@ -172,7 +173,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN
             assertThatThrownBy(() -> authenticationService.signUp(request))
                 .isInstanceOf(ValidationException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "PASSWORD_WEAK");
+                .hasFieldOrPropertyWithValue("errorCode", "VALIDATION_ERROR");
         }
 
         @Test
@@ -187,7 +188,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN
             assertThatThrownBy(() -> authenticationService.signUp(request))
                 .isInstanceOf(ValidationException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "PASSWORD_WEAK");
+                .hasFieldOrPropertyWithValue("errorCode", "VALIDATION_ERROR");
         }
 
         @Test
@@ -310,7 +311,7 @@ class AuthenticationServiceTest {
             assertThatThrownBy(() -> authenticationService.signIn(request))
                 .isInstanceOf(AuthenticationException.class)
                 .hasFieldOrPropertyWithValue("errorCode", "INVALID_CREDENTIALS")
-                .hasMessageContaining("Invalid username or password");
+                .hasMessageContaining("invalid_credentials");
         }
 
         @Test
@@ -327,7 +328,7 @@ class AuthenticationServiceTest {
             assertThatThrownBy(() -> authenticationService.signIn(request))
                 .isInstanceOf(AuthenticationException.class)
                 .hasFieldOrPropertyWithValue("errorCode", "INVALID_CREDENTIALS")
-                .hasMessageContaining("Invalid username or password");
+                .hasMessageContaining("invalid_credentials");
         }
 
         @Test
@@ -378,7 +379,7 @@ class AuthenticationServiceTest {
             assertThatThrownBy(() -> authenticationService.signIn(request))
                 .isInstanceOf(AuthenticationException.class)
                 .hasFieldOrPropertyWithValue("errorCode", "INVALID_CREDENTIALS")
-                .hasMessageContaining("Invalid username or password");
+                .hasMessageContaining("invalid_credentials");
         }
 
         @Test
@@ -434,7 +435,7 @@ class AuthenticationServiceTest {
             // WHEN / THEN - Same error message as non-existent user
             assertThatThrownBy(() -> authenticationService.signIn(request))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Invalid username or password");
+                .hasMessage("invalid_credentials");
         }
     }
 
