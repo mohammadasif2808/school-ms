@@ -1,0 +1,163 @@
+We are in the FINAL STABILIZATION phase of BDD tests
+for identity-service.
+
+You must act as a PROFESSIONAL RELEASE-STABILIZATION ENGINEER,
+not a generic test fixer.
+
+Context:
+- Project: identity-service
+- Stack: Spring Boot 3, Java 17
+- Authentication: JWT
+- Authorization: RBAC (roles + permissions)
+- Database: MySQL, EMPTY at test start
+- Tests: Cucumber BDD + RestAssured + limited Swagger UI Selenium
+- identity-service is NEAR FREEZE
+
+Current State:
+- Total tests: 87
+- Failures: 15
+- Errors: 0
+- All failures are clustered (mostly Admin APIs returning 500)
+
+I will paste the latest BDD failure report below.
+
+---
+
+## PRIMARY OBJECTIVE
+
+➡️ Reduce failures from 15 → 0
+➡️ By fixing ROOT CAUSES, not individual scenarios
+➡️ With minimal, safe, auditable changes
+
+---
+
+## OPERATING RULES (STRICT)
+
+- Treat failures as CLUSTERS, not isolated cases
+- Fix ONE ROOT CAUSE per iteration
+- Prefer fixing PRODUCTION CODE for 500 errors
+- Prefer fixing TESTS for visibility / expectation issues
+- NEVER weaken security
+- NEVER change API contracts
+- NEVER refactor unrelated code
+- NEVER assume pre-seeded DB data
+
+---
+
+## REQUIRED WORKFLOW (MANDATORY)
+
+### ITERATION N
+
+#### STEP 1 — FAILURE CLUSTERING
+Group failures into ROOT-CAUSE CLUSTERS.
+
+For EACH cluster, list:
+- Cluster name
+- Approx. number of failures
+- Common failing assertion
+- Likely single root cause
+
+(Expected clusters here include:
+- Admin Role creation returns 500
+- Admin Permission creation returns 500
+- Downstream assignment APIs failing due to missing role/permission
+- Swagger UI endpoint visibility mismatch)
+
+---
+
+#### STEP 2 — PRIORITIZATION
+Rank clusters by:
+1. Number of failures eliminated
+2. Architectural importance (admin core > e2e > swagger)
+3. Risk level
+
+Explicitly justify why Cluster #1 must be fixed first.
+
+---
+
+#### STEP 3 — ROOT CAUSE CLASSIFICATION (TOP CLUSTER)
+Classify the top cluster as ONE of:
+
+A) Production code bug (e.g., null handling, transaction, constraint)
+B) Missing bootstrap logic (admin prerequisites not ensured)
+C) Validation or error-handling gap (exception → 500)
+D) Test setup flaw (admin user/role not prepared correctly)
+
+Explain briefly.
+
+---
+
+#### STEP 4 — APPLY THE FIX (TOP CLUSTER ONLY)
+You MUST propose the fix, not just describe it.
+
+- Decide fix location:
+  - Production code
+  - Test code
+  - Configuration
+
+- Provide EXACT changes:
+  - Method-level code snippet
+  - Controller/service exception handling
+  - Test step correction (if applicable)
+
+Rules:
+- No refactors
+- No speculative changes
+- Do NOT fix other clusters yet
+
+---
+
+#### STEP 5 — POST-FIX SIMULATION
+Assume the fix is applied.
+
+Then state:
+- Which scenarios will now pass
+- Which clusters remain
+- Updated estimated failure count
+
+Proceed automatically to the next iteration.
+
+---
+
+## STOP CONDITIONS (STRICT)
+
+Stop ONLY when:
+- ✅ All BDD tests pass
+OR
+- ⚠️ A human decision is required
+
+If human decision is required:
+- State the exact decision
+- Explain why it cannot be auto-resolved
+(e.g., “Should Swagger show secured endpoints without auth?”)
+
+---
+
+## OUTPUT FORMAT (MANDATORY)
+
+Iteration N
+
+1) Failure Clusters:
+   - Cluster name:
+     - Failures:
+     - Root cause:
+
+2) Selected Cluster:
+   - Reason for priority:
+
+3) Root Cause Classification:
+
+4) Fix Applied:
+   - Location:
+   - Exact changes:
+
+5) Expected Impact:
+   - Failures resolved:
+   - Remaining clusters:
+
+6) Next Iteration Plan:
+
+---
+
+Here is the latest BDD failure report:
+<PASTE REPORT HERE>
