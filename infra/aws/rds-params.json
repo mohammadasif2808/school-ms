@@ -1,0 +1,47 @@
+[
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "DBEngine",
+    "ParameterValue": "mysql"
+  },
+  {
+    "ParameterKey": "DBEngineVersion",
+    "ParameterValue": "8.0.39"
+  },
+  {
+    "ParameterKey": "DBInstanceClass",
+    "ParameterValue": "db.t3.micro"
+  },
+  {
+    "ParameterKey": "AllocatedStorage",
+    "ParameterValue": "20"
+  },
+  {
+    "ParameterKey": "DBName",
+    "ParameterValue": "identitydb"
+  },
+  {
+    "ParameterKey": "DBUsername",
+    "ParameterValue": "admin"
+  },
+  {
+    "ParameterKey": "DBPassword",
+    "ParameterValue": "AdminPass12345678"
+  },
+  {
+    "ParameterKey": "BackupRetentionDays",
+    "ParameterValue": "0"
+  },
+  {
+    "ParameterKey": "PubliclyAccessible",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "StorageEncrypted",
+    "ParameterValue": "false"
+  }
+]
+

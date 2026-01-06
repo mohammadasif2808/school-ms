@@ -1,0 +1,320 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  EC2 Stack - Docker Host Instance
+  Ubuntu 22.04 LTS instance with Docker, Docker Compose, and Nginx pre-installed.
+  Instance acts as host for Jenkins and Spring Boot microservices.
+  Cross-stack references from network-stack, security-stack, and rds-stack.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment name for resource naming and tagging
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: EC2 instance type (t3.micro for free tier, t3.small for prod)
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access (must exist in AWS account)
+
+  InstanceName:
+    Type: String
+    Default: docker-host
+    Description: Name tag for EC2 instance
+    AllowedPattern: '^[a-zA-Z0-9\-_]*$'
+
+  RootVolumeSize:
+    Type: Number
+    Default: 20
+    Description: Root volume size in GB (20 GB sufficient for Docker + services)
+    MinValue: 20
+    MaxValue: 1024
+
+  RootVolumeType:
+    Type: String
+    Default: gp3
+    Description: Root volume type (gp3 for better performance, gp2 for cost)
+    AllowedValues:
+      - gp2
+      - gp3
+      - io1
+
+  EnableMonitoring:
+    Type: String
+    Default: 'false'
+    Description: Enable detailed CloudWatch monitoring (additional cost)
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Metadata:
+  AWS::CloudFormation::Init:
+    configSets:
+      default:
+        - update-system
+        - install-docker
+        - install-docker-compose
+        - install-nginx
+        - start-services
+        - configure-docker-group
+
+Resources:
+  # IAM Role for EC2 Instance
+  # Allows future CloudWatch, Systems Manager, and S3 access
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-ec2-instance-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # SSM access for Systems Manager Session Manager (alternative to SSH)
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        # CloudWatch agent access for monitoring
+        - 'arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy'
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-ec2-instance-role'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Instance Profile for EC2 (required to attach role)
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # EC2 Instance
+  # Ubuntu 22.04 LTS with CloudFormation Init scripts
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT15M
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: ami-0030e4319cbf4dbf2  # Ubuntu 22.04 LTS
+      KeyName: !Ref KeyPairName
+      SubnetId:
+        Fn::ImportValue: !Sub '${EnvironmentName}-PublicSubnetId'
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub '${EnvironmentName}-EC2SecurityGroupId'
+      IamInstanceProfile: !Ref EC2InstanceProfile
+
+      # Root volume configuration
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref RootVolumeSize
+            VolumeType: !Ref RootVolumeType
+            DeleteOnTermination: true
+            Encrypted: false
+
+      # Monitoring
+      Monitoring: !Ref EnableMonitoring
+
+      # User data script for initial setup
+      # Executes before CFN Init for early package installation
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          
+          # Log output for debugging
+          exec > >(tee /var/log/user-data.log)
+          exec 2>&1
+          
+          echo "=== EC2 Instance Initialization Started ==="
+          echo "Environment: ${EnvironmentName}"
+          echo "Instance Type: ${InstanceType}"
+          
+          # Update system packages
+          apt-get update -y
+          apt-get upgrade -y
+          
+          # Install prerequisites for Docker and other tools
+          apt-get install -y \
+            ca-certificates \
+            curl \
+            gnupg \
+            lsb-release \
+            apt-transport-https \
+            unzip \
+            wget \
+            git \
+            htop \
+            net-tools
+          
+          # Install Docker
+          echo "=== Installing Docker ==="
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+            tee /etc/apt/sources.list.d/docker.list > /dev/null
+          
+          apt-get update -y
+          apt-get install -y \
+            docker-ce \
+            docker-ce-cli \
+            containerd.io \
+            docker-buildx-plugin \
+            docker-compose-plugin
+          
+          # Install Docker Compose (v2 - bundled above)
+          echo "=== Docker Compose Already Installed (v2) ==="
+          
+          # Verify installations
+          echo "=== Verifying Installations ==="
+          docker --version
+          docker compose version
+          
+          # Start Docker service
+          systemctl start docker
+          systemctl enable docker
+          
+          # Add ubuntu user to docker group (non-root Docker access)
+          usermod -aG docker ubuntu
+          
+          # Install Nginx
+          echo "=== Installing Nginx ==="
+          apt-get install -y nginx
+          systemctl start nginx
+          systemctl enable nginx
+          
+          # Create Nginx reverse proxy config for microservices
+          # This will route traffic to Docker containers later
+          tee /etc/nginx/sites-available/default > /dev/null <<'EOF'
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              
+              server_name _;
+              
+              # API Gateway / Reverse Proxy
+              location / {
+                  proxy_pass http://localhost:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_connect_timeout 60s;
+                  proxy_send_timeout 60s;
+                  proxy_read_timeout 60s;
+              }
+              
+              # Health check endpoint
+              location /health {
+                  access_log off;
+                  return 200 "healthy\n";
+                  add_header Content-Type text/plain;
+              }
+          }
+          EOF
+          
+          # Reload Nginx
+          nginx -t && systemctl reload nginx
+          
+          echo "=== EC2 Instance Initialization Complete ==="
+          echo "Docker: $(docker --version)"
+          echo "Docker Compose: $(docker compose version)"
+          echo "Nginx: $(nginx -v 2>&1)"
+          
+          # Signal CloudFormation that initialization succeeded
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-${InstanceName}'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Role
+          Value: docker-host
+        - Key: Service
+          Value: jenkins-identity-service
+
+  # Elastic IP for consistent public IP (optional but recommended)
+  # Allows instance to retain same IP even after stop/start
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    DependsOn: EC2Instance
+    Properties:
+      InstanceId: !Ref EC2Instance
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-eip'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Log Group for instance logs
+  # Aggregates logs from instance for monitoring and troubleshooting
+  EC2LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/ec2/${EnvironmentName}-${InstanceName}'
+      RetentionInDays: 7
+
+Outputs:
+  InstanceId:
+    Description: EC2 instance ID
+    Value: !Ref EC2Instance
+    Export:
+      Name: !Sub '${EnvironmentName}-EC2InstanceId'
+
+  InstancePublicIP:
+    Description: Public IP address of EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
+    Export:
+      Name: !Sub '${EnvironmentName}-EC2PublicIP'
+
+  InstancePublicDNS:
+    Description: Public DNS name of EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+    Export:
+      Name: !Sub '${EnvironmentName}-EC2PublicDNS'
+
+  ElasticIPAddress:
+    Description: Elastic IP address (remains same after stop/start)
+    Value: !Ref ElasticIP
+    Export:
+      Name: !Sub '${EnvironmentName}-ElasticIP'
+
+  SSHCommand:
+    Description: SSH command to connect to instance (use after key pair is loaded)
+    Value: !Sub 'ssh -i /path/to/${KeyPairName}.pem ubuntu@${ElasticIP}'
+
+  DockerCommand:
+    Description: Docker version command for verification
+    Value: 'ssh ubuntu@<INSTANCE_IP> "docker --version"'
+
+  NginxHealthCheck:
+    Description: Nginx health check endpoint
+    Value: !Sub 'http://${ElasticIP}/health'
+
+  DockerGroupRole:
+    Description: Ubuntu user is added to docker group for non-root access
+    Value: 'Run: docker ps on instance to verify (no sudo needed)'
+

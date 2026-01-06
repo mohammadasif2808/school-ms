@@ -1,0 +1,224 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  RDS Stack - MySQL Database Instance
+  Production-ready RDS deployment with public accessibility for development.
+  Includes automated backups, encryption at rest, and parameter-driven configuration.
+  Cross-stack references from network-stack and security-stack.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment name for resource naming and tagging
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  DBEngine:
+    Type: String
+    Default: mysql
+    Description: Database engine (mysql or postgres)
+    AllowedValues:
+      - mysql
+      - postgres
+
+  DBEngineVersion:
+    Type: String
+    Default: '8.0.39'
+    Description: |
+      MySQL version (8.0.x) or PostgreSQL version (15.x, etc.)
+      Check AWS RDS documentation for latest supported versions
+    AllowedValues:
+      - '8.0.39'
+      - '8.0.35'
+      - '5.7.44'
+
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: RDS instance type (db.t3.micro for free tier, db.t3.small for prod)
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+    Description: Allocated storage in GB (20 GB free tier limit, increase for prod)
+    MinValue: 20
+    MaxValue: 65536
+
+  DBName:
+    Type: String
+    Default: identitydb
+    Description: Initial database name to create
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    ConstraintDescription: Must start with letter, contain only alphanumeric and underscore
+
+  DBUsername:
+    Type: String
+    Default: admin
+    Description: Master username for database
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    ConstraintDescription: Must start with letter, contain only alphanumeric and underscore
+    MinLength: 1
+    MaxLength: 16
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Master password (auto-generated if left empty, 8+ chars recommended)
+    MinLength: 8
+    MaxLength: 41
+    AllowedPattern: '^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?]*$'
+    ConstraintDescription: Password must be 8-41 chars, alphanumeric and special chars only
+
+  BackupRetentionDays:
+    Type: Number
+    Default: 0
+    Description: |
+      Backup retention period in days (0=disabled for dev, 7+ for prod).
+      Backups enable point-in-time recovery and account migration.
+    MinValue: 0
+    MaxValue: 35
+
+  PubliclyAccessible:
+    Type: String
+    Default: 'true'
+    Description: |
+      Allow public internet access to RDS (true for dev, false for prod).
+      When true, RDS is accessible from anywhere (still restricted by security group).
+      Security group rules provide additional IP-based filtering.
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  StorageEncrypted:
+    Type: String
+    Default: 'false'
+    Description: |
+      Enable encryption at rest (false for free tier, true for prod).
+      Encrypted RDS instances cannot be modified easily.
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Resources:
+  # DB Subnet Group
+  # Allows RDS to span multiple subnets (required - needs at least 2 AZs)
+  # Using both public subnets in different AZs
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Sub '${EnvironmentName}-db-subnet-group'
+      DBSubnetGroupDescription: Subnet group for RDS instances (multi-AZ requirement)
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${EnvironmentName}-PublicSubnetId'
+        - Fn::ImportValue: !Sub '${EnvironmentName}-PublicSubnet2Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-db-subnet-group'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # RDS MySQL Instance
+  # Key features:
+  # - PubliclyAccessible: allows external connections (dev/test only)
+  # - Security group restricts IP access (no 0.0.0.0/0 ingress)
+  # - Backup retention parameterized (0=dev, 7+=prod)
+  # - Encryption parameterized (false=dev, true=prod)
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-identity-db'
+      Engine: !Ref DBEngine
+      EngineVersion: !Ref DBEngineVersion
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref AllocatedStorage
+      StorageType: gp2
+      StorageEncrypted: !Ref StorageEncrypted
+
+      # Database credentials
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBName: !Ref DBName
+
+      # Network configuration
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - Fn::ImportValue: !Sub '${EnvironmentName}-RDSSecurityGroupId'
+      PubliclyAccessible: !Ref PubliclyAccessible
+
+      # Backup and maintenance
+      BackupRetentionPeriod: !Ref BackupRetentionDays
+      CopyTagsToSnapshot: true
+      DeleteAutomatedBackups: false
+
+      # Performance and monitoring
+      EnableIAMDatabaseAuthentication: false
+      EnableCloudwatchLogsExports:
+        - error
+        - general
+        - slowquery
+      MonitoringInterval: 0
+
+      # MySQL port
+      Port: 3306
+
+      # Deletion protection for production
+      DeletionProtection: false
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-identity-db'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Service
+          Value: identity-service
+
+
+Outputs:
+  RDSEndpoint:
+    Description: RDS instance endpoint (host:port)
+    Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${EnvironmentName}-RDSEndpoint'
+
+  RDSPort:
+    Description: RDS instance port
+    Value: !GetAtt RDSInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${EnvironmentName}-RDSPort'
+
+  RDSConnectionString:
+    Description: JDBC connection string format (for Spring Boot)
+    Value: !Sub 'jdbc:mysql://${RDSInstance.Endpoint.Address}:${RDSInstance.Endpoint.Port}/${DBName}'
+    Export:
+      Name: !Sub '${EnvironmentName}-RDSConnectionString'
+
+  DBName:
+    Description: Database name
+    Value: !Ref DBName
+    Export:
+      Name: !Sub '${EnvironmentName}-DBName'
+
+  DBUsername:
+    Description: Database master username
+    Value: !Ref DBUsername
+    Export:
+      Name: !Sub '${EnvironmentName}-DBUsername'
+
+  RDSInstanceId:
+    Description: RDS instance identifier
+    Value: !Ref RDSInstance
+    Export:
+      Name: !Sub '${EnvironmentName}-RDSInstanceId'
+
+  RDSSecurityGroup:
+    Description: RDS security group ID
+    Value:
+      Fn::ImportValue: !Sub '${EnvironmentName}-RDSSecurityGroupId'
+

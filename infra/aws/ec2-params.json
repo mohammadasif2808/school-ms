@@ -1,0 +1,31 @@
+[
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "t3.micro"
+  },
+  {
+    "ParameterKey": "KeyPairName",
+    "ParameterValue": "my-key"
+  },
+  {
+    "ParameterKey": "InstanceName",
+    "ParameterValue": "docker-host"
+  },
+  {
+    "ParameterKey": "RootVolumeSize",
+    "ParameterValue": "20"
+  },
+  {
+    "ParameterKey": "RootVolumeType",
+    "ParameterValue": "gp3"
+  },
+  {
+    "ParameterKey": "EnableMonitoring",
+    "ParameterValue": "false"
+  }
+]
+

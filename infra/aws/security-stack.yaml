@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Security Stack - EC2 and RDS Security Groups
+  Manages ingress/egress rules for compute and database tiers.
+  Uses IP-restricted access for RDS (no 0.0.0.0/0).
+  Cross-stack references from network-stack outputs.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment name for resource naming and tagging
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  DeveloperIPAddress:
+    Type: String
+    Default: 0.0.0.0/32
+    Description: |
+      Local developer IP in CIDR format (/32 for single IP, e.g., 203.0.113.45/32).
+      This IP gets direct access to RDS for local development.
+      WARNING: Using 0.0.0.0/0 exposes database - only use for demo purposes.
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+
+  DBPort:
+    Type: Number
+    Default: 3306
+    Description: Database port (3306 for MySQL, 5432 for PostgreSQL)
+    MinValue: 1024
+    MaxValue: 65535
+
+Resources:
+  # EC2 Security Group
+  # Allows SSH, HTTP, HTTPS from anywhere (typical for web/app servers)
+  # Egress rules allow all outbound traffic (default)
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${EnvironmentName}-ec2-sg'
+      GroupDescription: Security group for EC2 instances (SSH, HTTP, HTTPS)
+      VpcId:
+        Fn::ImportValue: !Sub '${EnvironmentName}-VpcId'
+      SecurityGroupIngress:
+        # SSH access from anywhere (restrictable to specific IPs in prod)
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access from anywhere
+
+        # HTTP access for Nginx/API Gateway
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP traffic for web services
+
+        # HTTPS access for secure traffic
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS traffic for web services
+
+      SecurityGroupEgress:
+        # Allow all outbound traffic (Docker pulls, package downloads, etc.)
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-ec2-sg'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # RDS Security Group
+  # Restrictive by default: only EC2 and developer IP can access database
+  # No public internet access (0.0.0.0/0)
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${EnvironmentName}-rds-sg'
+      GroupDescription: Security group for RDS instances (database access only)
+      VpcId:
+        Fn::ImportValue: !Sub '${EnvironmentName}-VpcId'
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-rds-sg'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # RDS Rule 1: Allow EC2 to access RDS
+  # EC2 instances in the same VPC can connect to database
+  RDSFromEC2Rule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RDSSecurityGroup
+      IpProtocol: tcp
+      FromPort: !Ref DBPort
+      ToPort: !Ref DBPort
+      SourceSecurityGroupId: !Ref EC2SecurityGroup
+      Description: Allow database access from EC2 instances
+
+  # RDS Rule 2: Allow developer IP to access RDS
+  # Local developer can connect from specified IP address for debugging
+  # This is safe because it's /32 (single IP) and explicitly defined
+  RDSFromDeveloperRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RDSSecurityGroup
+      IpProtocol: tcp
+      FromPort: !Ref DBPort
+      ToPort: !Ref DBPort
+      CidrIp: !Ref DeveloperIPAddress
+      Description: Allow database access from developer IP for local development
+
+  # Note: No egress rules for RDS - default allows all outbound
+  # RDS doesn't typically initiate outbound connections, but allow for monitoring/updates
+
+Outputs:
+  EC2SecurityGroupId:
+    Description: Security Group ID for EC2 instances
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub '${EnvironmentName}-EC2SecurityGroupId'
+
+  RDSSecurityGroupId:
+    Description: Security Group ID for RDS instances
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub '${EnvironmentName}-RDSSecurityGroupId'
+
+  EC2SecurityGroupName:
+    Description: Name of EC2 security group
+    Value: !Ref EC2SecurityGroup
+
+  RDSSecurityGroupName:
+    Description: Name of RDS security group
+    Value: !Ref RDSSecurityGroup
+
