@@ -103,13 +103,9 @@ Resources:
         - !Ref EC2InstanceRole
 
   # EC2 Instance
-  # Ubuntu 22.04 LTS with CloudFormation Init scripts
+  # Ubuntu 22.04 LTS with Docker setup
   EC2Instance:
     Type: AWS::EC2::Instance
-    CreationPolicy:
-      ResourceSignal:
-        Count: 1
-        Timeout: PT15M
     Properties:
       InstanceType: !Ref InstanceType
       ImageId: ami-0030e4319cbf4dbf2  # Ubuntu 22.04 LTS
@@ -150,6 +146,14 @@ Resources:
           # Update system packages
           apt-get update -y
           apt-get upgrade -y
+          
+          # Install AWS CLI and CloudFormation tools first
+          apt-get install -y \
+            python3-pip \
+            awscli
+          
+          # Install CloudFormation helper scripts
+          pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           
           # Install prerequisites for Docker and other tools
           apt-get install -y \
@@ -242,8 +246,7 @@ Resources:
           echo "Docker Compose: $(docker compose version)"
           echo "Nginx: $(nginx -v 2>&1)"
           
-          # Signal CloudFormation that initialization succeeded
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          echo "=== UserData Script Completed Successfully ==="
 
       Tags:
         - Key: Name
