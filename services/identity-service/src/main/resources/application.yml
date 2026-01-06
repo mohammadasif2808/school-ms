@@ -2,17 +2,8 @@ spring:
   application:
     name: identity-service
 
-  datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/identity_service}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 60000
-      idle-timeout: 900000
-      max-lifetime: 1800000
-      auto-commit: true
+  # Database configuration moved to profile-specific files
+  # See application-local.yml and application-dev.yml
 
   jpa:
     hibernate:

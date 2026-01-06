@@ -1,0 +1,54 @@
+pipeline {
+  agent any
+
+  environment {
+    SERVICE_NAME   = "identity-service"
+    IMAGE_NAME     = "identity-service"
+    CONTAINER_NAME = "identity-service"
+    SERVICE_DIR    = "services/identity-service"
+  }
+
+  stages {
+
+    stage('Checkout Code') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build JAR') {
+      steps {
+        dir("${SERVICE_DIR}") {
+          sh 'mvn clean package -DskipTests'
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        dir("${SERVICE_DIR}") {
+          sh 'docker build -t ${IMAGE_NAME}:latest .'
+        }
+      }
+    }
+
+    stage('Deploy Container') {
+      steps {
+        sh '''
+          docker stop ${CONTAINER_NAME} || true
+          docker rm ${CONTAINER_NAME} || true
+
+          docker run -d \
+            --name ${CONTAINER_NAME} \
+            -p 8080:8080 \
+            -e SPRING_PROFILES_ACTIVE=dev \
+            -e DB_HOST=<RDS_ENDPOINT> \
+            -e DB_NAME=identity_db \
+            -e DB_USER=admin \
+            -e DB_PASS=******** \
+            ${IMAGE_NAME}:latest
+        '''
+      }
+    }
+  }
+}
