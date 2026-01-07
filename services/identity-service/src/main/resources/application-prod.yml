@@ -1,5 +1,5 @@
 # Development/AWS Profile Configuration
-# Activated with: spring.profiles.active=dev
+# Activated with: spring.profiles.active=prod
 # Uses AWS RDS database via environment variables
 
 spring:
@@ -18,7 +18,7 @@ spring:
       connection-test-query: SELECT 1
       validation-timeout: 3000
 
-# Production-like settings for dev environment
+# Production settings for prod environment
 logging:
   level:
     com.school: INFO

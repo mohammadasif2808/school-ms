@@ -3,7 +3,7 @@ spring:
     name: identity-service
 
   # Database configuration moved to profile-specific files
-  # See application-local.yml and application-dev.yml
+  # See application-local.yml and application-prod.yml
 
   jpa:
     hibernate:
