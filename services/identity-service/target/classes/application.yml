@@ -1,0 +1,93 @@
+spring:
+  application:
+    name: identity-service
+
+  # Database configuration moved to profile-specific files
+  # See application-local.yml and application-prod.yml
+
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+    show-sql: ${SHOW_SQL:false}
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    min-response-size: 1024
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Swagger / OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    # Enable/disable Swagger UI (can be disabled in production)
+    enabled: ${SWAGGER_UI_ENABLED:true}
+    # Show request/response models
+    show-models: true
+    # Use model for request body
+    use-root-path: true
+    # Default models expansion depth
+    default-models-expand-depth: 1
+    # Persist auth token across page reloads
+    persist-authorization: true
+    # Display operation details on click (not on hover)
+    doc-expansion: list
+    # Show schema for request/response body
+    show-extensions: true
+    # URL to swagger.json (relative to app path)
+    url: /v3/api-docs
+
+  api-docs:
+    # Enable/disable OpenAPI JSON endpoint
+    enabled: ${OPENAPI_DOCS_ENABLED:true}
+    # Path for OpenAPI JSON
+    path: /v3/api-docs
+
+  # Show actuator endpoints in Swagger (optional)
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.school: ${LOG_LEVEL_APP:DEBUG}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-key-minimum-32-bytes-length-change-in-production}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Service Configuration
+service:
+  name: identity-service
+  version: 1.0.0
+  tenant-id: ${TENANT_ID:default}
+

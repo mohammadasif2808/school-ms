@@ -1,0 +1,22 @@
+# Local Development Profile Configuration
+# Activated with: spring.profiles.active=local
+# Uses local MySQL database
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/identity_service
+    username: root
+    password: ""
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 60000
+      idle-timeout: 900000
+      max-lifetime: 1800000
+      auto-commit: true
+
+# Local development settings
+logging:
+  level:
+    com.school: DEBUG
+    org.springframework.web: DEBUG
