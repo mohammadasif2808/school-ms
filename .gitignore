@@ -10,11 +10,11 @@
 .env.*.local
 
 # Build
-target/
+#target/
 build/
 out/
 *.class
-*.jar
+#*.jar
 
 # Dependencies
 node_modules/
