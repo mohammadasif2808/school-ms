@@ -1,15 +1,9 @@
 package com.school.academic.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateStaffAssignmentRequest {
 
     @NotNull(message = "Staff ID is required")
@@ -23,5 +17,47 @@ public class CreateStaffAssignmentRequest {
 
     @NotNull(message = "Class section ID is required")
     private UUID classSectionId;
+
+    public CreateStaffAssignmentRequest() {
+    }
+
+    public CreateStaffAssignmentRequest(UUID staffId, UUID academicYearId, UUID subjectId, UUID classSectionId) {
+        this.staffId = staffId;
+        this.academicYearId = academicYearId;
+        this.subjectId = subjectId;
+        this.classSectionId = classSectionId;
+    }
+
+    public UUID getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(UUID staffId) {
+        this.staffId = staffId;
+    }
+
+    public UUID getAcademicYearId() {
+        return academicYearId;
+    }
+
+    public void setAcademicYearId(UUID academicYearId) {
+        this.academicYearId = academicYearId;
+    }
+
+    public UUID getSubjectId() {
+        return subjectId;
+    }
+
+    public void setSubjectId(UUID subjectId) {
+        this.subjectId = subjectId;
+    }
+
+    public UUID getClassSectionId() {
+        return classSectionId;
+    }
+
+    public void setClassSectionId(UUID classSectionId) {
+        this.classSectionId = classSectionId;
+    }
 }
 

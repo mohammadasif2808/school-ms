@@ -1,15 +1,9 @@
 package com.school.academic.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class LinkGuardianRequest {
 
     @NotNull(message = "Parent ID is required")
@@ -19,5 +13,38 @@ public class LinkGuardianRequest {
     private String relationship;
 
     private Boolean isPrimaryContact = false;
+
+    public LinkGuardianRequest() {
+    }
+
+    public LinkGuardianRequest(UUID parentId, String relationship, Boolean isPrimaryContact) {
+        this.parentId = parentId;
+        this.relationship = relationship;
+        this.isPrimaryContact = isPrimaryContact;
+    }
+
+    public UUID getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(UUID parentId) {
+        this.parentId = parentId;
+    }
+
+    public String getRelationship() {
+        return relationship;
+    }
+
+    public void setRelationship(String relationship) {
+        this.relationship = relationship;
+    }
+
+    public Boolean getIsPrimaryContact() {
+        return isPrimaryContact;
+    }
+
+    public void setIsPrimaryContact(Boolean isPrimaryContact) {
+        this.isPrimaryContact = isPrimaryContact;
+    }
 }
 

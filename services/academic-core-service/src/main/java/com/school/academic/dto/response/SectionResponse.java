@@ -1,17 +1,34 @@
 package com.school.academic.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class SectionResponse {
 
     private UUID id;
     private String name;
+
+    public SectionResponse() {
+    }
+
+    public SectionResponse(UUID id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }
 

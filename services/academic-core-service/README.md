@@ -11,8 +11,8 @@ The Academic Core Service is the source of truth for institutional hierarchy and
 - Spring Boot 3.2.1
 - Spring Web MVC
 - Bean Validation
-- Lombok
 - SpringDoc OpenAPI (Swagger)
+- **Pure Java** (No Lombok - explicit getters/setters)
 
 ## Project Structure
 ```

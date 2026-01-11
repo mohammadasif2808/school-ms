@@ -1,15 +1,9 @@
 package com.school.academic.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateClassSectionRequest {
 
     @NotNull(message = "Class ID is required")
@@ -22,5 +16,47 @@ public class CreateClassSectionRequest {
     private UUID academicYearId;
 
     private String medium = "English";
+
+    public CreateClassSectionRequest() {
+    }
+
+    public CreateClassSectionRequest(UUID classId, UUID sectionId, UUID academicYearId, String medium) {
+        this.classId = classId;
+        this.sectionId = sectionId;
+        this.academicYearId = academicYearId;
+        this.medium = medium;
+    }
+
+    public UUID getClassId() {
+        return classId;
+    }
+
+    public void setClassId(UUID classId) {
+        this.classId = classId;
+    }
+
+    public UUID getSectionId() {
+        return sectionId;
+    }
+
+    public void setSectionId(UUID sectionId) {
+        this.sectionId = sectionId;
+    }
+
+    public UUID getAcademicYearId() {
+        return academicYearId;
+    }
+
+    public void setAcademicYearId(UUID academicYearId) {
+        this.academicYearId = academicYearId;
+    }
+
+    public String getMedium() {
+        return medium;
+    }
+
+    public void setMedium(String medium) {
+        this.medium = medium;
+    }
 }
 

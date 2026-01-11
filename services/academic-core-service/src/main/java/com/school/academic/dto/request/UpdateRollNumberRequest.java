@@ -2,15 +2,9 @@ package com.school.academic.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdateRollNumberRequest {
 
     private UUID academicYearId;
@@ -20,5 +14,38 @@ public class UpdateRollNumberRequest {
 
     @NotBlank(message = "Roll number is required")
     private String rollNumber;
+
+    public UpdateRollNumberRequest() {
+    }
+
+    public UpdateRollNumberRequest(UUID academicYearId, UUID enrollmentId, String rollNumber) {
+        this.academicYearId = academicYearId;
+        this.enrollmentId = enrollmentId;
+        this.rollNumber = rollNumber;
+    }
+
+    public UUID getAcademicYearId() {
+        return academicYearId;
+    }
+
+    public void setAcademicYearId(UUID academicYearId) {
+        this.academicYearId = academicYearId;
+    }
+
+    public UUID getEnrollmentId() {
+        return enrollmentId;
+    }
+
+    public void setEnrollmentId(UUID enrollmentId) {
+        this.enrollmentId = enrollmentId;
+    }
+
+    public String getRollNumber() {
+        return rollNumber;
+    }
+
+    public void setRollNumber(String rollNumber) {
+        this.rollNumber = rollNumber;
+    }
 }
 
