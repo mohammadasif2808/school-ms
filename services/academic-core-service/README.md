@@ -4,14 +4,20 @@
 The Academic Core Service is the source of truth for institutional hierarchy and people management within the school management system. It manages students, staff, parents, academic structure (years, classes, sections), enrollments, curriculum, and classrooms.
 
 ## Status
-**SKELETON PHASE** - Compilable structure with no business logic implementation.
+**IMPLEMENTED** - Full business logic with repository layer, validation, and tests.
 
 ## Technology Stack
 - Java 17
 - Spring Boot 3.2.1
 - Spring Web MVC
+- Spring Data JPA
+- MySQL 8.x (schema: `academic_core`)
+- Flyway (database migrations)
 - Bean Validation
 - SpringDoc OpenAPI (Swagger)
+- JUnit 5 + Mockito (testing)
+- Testcontainers (integration testing)
+- Micrometer + Prometheus (metrics)
 - **Pure Java** (No Lombok - explicit getters/setters)
 
 ## Project Structure
@@ -20,6 +26,35 @@ com.school.academic
 ├── AcademicCoreServiceApplication.java
 ├── config/
 │   └── OpenApiConfig.java
+├── domain/                              # JPA Entities
+│   ├── AcademicYear.java
+│   ├── BaseEntity.java
+│   ├── Classroom.java
+│   ├── ClassSection.java
+│   ├── Enrollment.java
+│   ├── GradeClass.java
+│   ├── Parent.java
+│   ├── Section.java
+│   ├── Staff.java
+│   ├── StaffAssignment.java
+│   ├── Student.java
+│   ├── StudentParent.java
+│   ├── Subject.java
+│   └── SubjectAssignment.java
+├── repository/                          # Spring Data JPA Repositories
+│   ├── AcademicYearRepository.java
+│   ├── ClassroomRepository.java
+│   ├── ClassSectionRepository.java
+│   ├── EnrollmentRepository.java
+│   ├── GradeClassRepository.java
+│   ├── ParentRepository.java
+│   ├── SectionRepository.java
+│   ├── StaffAssignmentRepository.java
+│   ├── StaffRepository.java
+│   ├── StudentParentRepository.java
+│   ├── StudentRepository.java
+│   ├── SubjectAssignmentRepository.java
+│   └── SubjectRepository.java
 ├── controller/
 │   ├── AcademicStructureController.java
 │   ├── ClassroomController.java
@@ -157,36 +192,108 @@ This service strictly implements:
 ✅ **Completed:**
 - Complete package structure
 - All controllers with proper endpoint mappings
-- All service interfaces and implementations (stubs)
+- All service interfaces and full implementations
 - All request and response DTOs
 - Bean validation annotations
-- Global exception handling
+- Global exception handling with standardized ErrorResponse
 - OpenAPI/Swagger configuration
 - Constructor-based dependency injection
+- JPA entities with audit columns
+- Spring Data JPA repositories
+- Flyway database migrations (13 migration files)
+- Business logic with domain invariants
+- Unit tests for AcademicStructureService and EnrollmentService
+- Dockerfile for containerization
+- Actuator health and metrics endpoints
 
-⏳ **Not Yet Implemented:**
-- Business logic (methods throw `UnsupportedOperationException`)
-- JPA entities and repositories
-- Database configuration
-- Data persistence
-- Security configuration
-- Unit and integration tests
+## Environment Variables
 
-## Next Steps
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SPRING_PROFILES_ACTIVE` | Active profile (local/prod) | `local` |
+| `SERVER_PORT` | Server port | `8081` |
+| `SPRING_DATASOURCE_URL` | MySQL JDBC URL | `jdbc:mysql://localhost:3306/academic_core...` |
+| `SPRING_DATASOURCE_USERNAME` | Database username | `root` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | (empty) |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Hibernate DDL mode | `validate` |
+| `LOG_LEVEL` | Log level for com.school.academic | `INFO` |
+| `FLYWAY_ENABLED` | Enable Flyway migrations | `true` |
 
-The following phases should be implemented in order:
+## Running Locally
 
-1. **Domain Layer**: Create JPA entities matching the domain model
-2. **Persistence Layer**: Create repositories and database configuration
-3. **Business Logic**: Implement service layer methods
-4. **Testing**: Add unit and integration tests
-5. **Security**: Integrate with identity-service for authentication context
+### Prerequisites
+- Java 17
+- Maven 3.8+
+- MySQL 8.x running with schema `academic_core`
+
+### Database Setup
+```bash
+# Connect to MySQL and create schema
+mysql -u root -p
+CREATE SCHEMA IF NOT EXISTS academic_core;
+```
+
+### Running the Application
+```bash
+# Set environment variables
+export SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/academic_core?useSSL=false&allowPublicKeyRetrieval=true
+export SPRING_DATASOURCE_USERNAME=root
+export SPRING_DATASOURCE_PASSWORD=yourpassword
+
+# Run with Maven
+mvn spring-boot:run
+
+# Or build and run JAR
+mvn clean package -DskipTests
+java -jar target/academic-core-service-1.0.0.jar
+```
+
+### Running with Docker
+```bash
+# Build image
+docker build -t academic-core-service .
+
+# Run container
+docker run -p 8081:8081 \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/academic_core \
+  -e SPRING_DATASOURCE_USERNAME=root \
+  -e SPRING_DATASOURCE_PASSWORD=yourpassword \
+  academic-core-service
+```
+
+## Running Tests
+```bash
+# Run all tests
+mvn test
+
+# Run with coverage
+mvn test jacoco:report
+```
+
+## Key Domain Invariants
+
+1. **Identity boundary**: identity-service is authoritative for users. This service stores `userId` references only.
+2. **Enrollment is authoritative for roll numbers**: Roll numbers belong to Enrollment, not Student.
+3. **Roll uniqueness**: Roll number unique per (class_section_id, academic_year_id).
+4. **One enrollment per year**: Student cannot have >1 active enrollment for same academicYear.
+5. **Promotion is append-only**: Promotion closes old Enrollment and creates new Enrollment. Never delete.
+6. **AcademicYear must be explicit**: All placement commands require academicYearId explicitly.
+7. **Curriculum consistency**: Cannot assign staff to teach subject if subject not mapped to class for that year.
+
+## Authoritative References
+
+This service strictly implements:
+- **Domain Model**: `docs/domain-model.md` (FROZEN)
+- **OpenAPI Contract**: `docs/openapi-v1.yaml` (FROZEN v1.0)
+- **Prompt Context**: `docs/prompts/prompt.md`
 
 ## Notes
 
-- No authentication/authorization logic is included (handled upstream by identity-service)
-- All service methods currently throw `UnsupportedOperationException`
-- The skeleton is designed to compile cleanly with `mvn clean compile`
-- Constructor-based dependency injection is used throughout
+- No authentication/authorization logic included (handled upstream by api-gateway/identity-service)
+- Max JVM heap: 256MB (optimized for cost-constrained deployment)
+- Flyway migrations are in `src/main/resources/db/migration/`
+- Constructor-based dependency injection used throughout
 - DTOs match OpenAPI schema definitions exactly
+
+
 
