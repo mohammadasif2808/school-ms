@@ -1,49 +1,13 @@
-# Compiled class file
-*.class
+# Ignore everything
+*
 
-# Log file
-*.log
+# Do not ignore .gitignore itself
+!.gitignore
 
-# Package Files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# Do not ignore jar files in any directory
+!*.jar
+!**/*.jar
 
-# Maven
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
-
-# Eclipse
-.classpath
-.project
-.settings/
-
-# IntelliJ IDEA
-.idea/
-*.iml
-*.iws
-*.ipr
-out/
-
-# VS Code
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Spring Boot
-spring-boot-*.log
-
+# Do not ignore target/ directory and jar files inside it
+!target/
+!target/*.jar
