@@ -1,0 +1,1146 @@
+# Status: FROZEN – OpenAPI v1
+openapi: 3.0.3
+info:
+  title: Academic Core Service API
+  description: |
+    API for managing the academic structure, people, and placements within the institution.
+    Domain Model: v1.0 (FROZEN)
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Base API path
+
+tags:
+  - name: Students
+    description: Student profile management
+  - name: Parents
+    description: Parent/Guardian management
+  - name: Staff
+    description: Staff profile and assignment management
+  - name: Academic Structure
+    description: School hierarchy (Years, Classes, Sections)
+  - name: Enrollment
+    description: Student placement and promotion
+  - name: Curriculum
+    description: Subject definitions and assignments
+  - name: Classrooms
+    description: Physical room management
+
+paths:
+  # -------------------------------------------------------------------------
+  # STUDENTS
+  # -------------------------------------------------------------------------
+  /students:
+    get:
+      summary: List students
+      description: Search students with optional filters. Use enrollment filters to find students in specific classes.
+      tags: [Students]
+      parameters:
+        - name: classId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by currently enrolled class
+        - name: sectionId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by currently enrolled section
+        - name: academicYearId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by academic year (defaults to current if omitted but class/section provided)
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Partial match on first or last name
+      responses:
+        '200':
+          description: List of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentResponse'
+
+    post:
+      summary: Create student
+      description: Create a new student institutional profile. Enrollment happens separately.
+      tags: [Students]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudentRequest'
+      responses:
+        '201':
+          description: Student created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+
+  /students/{id}:
+    get:
+      summary: Get student details
+      tags: [Students]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+
+  /students/{id}/guardians:
+    post:
+      summary: Link guardian to student
+      tags: [Students]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkGuardianRequest'
+      responses:
+        '200':
+          description: Guardian linked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Guardian linked successfully"
+
+  # -------------------------------------------------------------------------
+  # PARENTS
+  # -------------------------------------------------------------------------
+  /parents:
+    post:
+      summary: Create parent profile
+      tags: [Parents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateParentRequest'
+      responses:
+        '201':
+          description: Parent created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParentResponse'
+
+  # -------------------------------------------------------------------------
+  # STAFF
+  # -------------------------------------------------------------------------
+  /staff:
+    get:
+      summary: List staff
+      description: |
+        List academic staff members.
+        This API manages academic/institutional staff profile only.
+        Payroll, salary, leaves, and bank details are OUT OF SCOPE.
+      tags: [Staff]
+      responses:
+        '200':
+          description: List of staff members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaffResponse'
+    post:
+      summary: Create staff profile
+      description: |
+        Create a new staff profile.
+        This API manages academic/institutional staff profile only.
+        Payroll, salary, leaves, and bank details are OUT OF SCOPE.
+      tags: [Staff]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStaffRequest'
+      responses:
+        '201':
+          description: Staff created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffResponse'
+
+  /staff/{id}/assignments:
+    get:
+      summary: Get staff teaching assignments
+      description: |
+        Get teaching assignments for a specific staff member.
+        This API manages academic/institutional staff profile only.
+      tags: [Staff]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of teaching assignments for the year
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaffAssignmentResponse'
+
+  # -------------------------------------------------------------------------
+  # ACADEMIC STRUCTURE
+  # -------------------------------------------------------------------------
+  /academic-years:
+    get:
+      summary: List academic years
+      tags: [Academic Structure]
+      responses:
+        '200':
+          description: All academic years
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcademicYearResponse'
+    post:
+      summary: Create academic year
+      tags: [Academic Structure]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAcademicYearRequest'
+      responses:
+        '201':
+          description: Academic year created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearResponse'
+
+  /classes:
+    get:
+      summary: List classes (grades)
+      tags: [Academic Structure]
+      responses:
+        '200':
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassResponse'
+    post:
+      summary: Create class
+      tags: [Academic Structure]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassRequest'
+      responses:
+        '201':
+          description: Class created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassResponse'
+
+  /sections:
+    get:
+      summary: List applicable sections
+      tags: [Academic Structure]
+      responses:
+        '200':
+          description: List of defined sections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SectionResponse'
+    post:
+      summary: Create section
+      tags: [Academic Structure]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSectionRequest'
+      responses:
+        '201':
+          description: Section created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SectionResponse'
+
+  /class-sections:
+    get:
+      summary: List class sections (Active Classes)
+      tags: [Academic Structure]
+      parameters:
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of class sections for the year
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassSectionResponse'
+    post:
+      summary: Define a class section for an academic year
+      description: |
+        Create a new class section.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Academic Structure]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassSectionRequest'
+      responses:
+        '201':
+          description: Class section created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassSectionResponse'
+
+  /class-sections/{id}:
+    put:
+      summary: Update class section details (Teacher/Room)
+      description: |
+        Assign or update teacher and classroom.
+        Classroom assignment is OPTIONAL, MUTABLE, and changes do NOT affect Enrollment, Roll numbers, or Academic history.
+      tags: [Academic Structure]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClassSectionRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassSectionResponse'
+
+  # -------------------------------------------------------------------------
+  # ENROLLMENT & PLACEMENT
+  # -------------------------------------------------------------------------
+  /enrollments:
+    get:
+      summary: Fetch enrollments
+      tags: [Enrollment]
+      parameters:
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: sectionId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of enrollments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnrollmentResponse'
+    post:
+      summary: Enroll a student into a class section
+      description: |
+        Create a new enrollment.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Enrollment]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnrollmentRequest'
+      responses:
+        '201':
+          description: Student enrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+
+  /enrollments/roll-numbers:
+    put:
+      summary: Bulk update roll numbers
+      description: |
+        Update roll numbers for enrollments.
+        Roll numbers belong to Enrollment and are unique per ClassSection + AcademicYear.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Enrollment]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UpdateRollNumberRequest'
+      responses:
+        '200':
+          description: Roll numbers updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /enrollments/promote:
+    post:
+      summary: Bulk promote students
+      description: |
+        Captures promotion history. Ends current enrollment and creates new one.
+        Promotion creates NEW enrollments. Old enrollments are CLOSED, not deleted.
+        Requires explicit source and target academic years.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Enrollment]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPromoteRequest'
+      responses:
+        '200':
+          description: Promotion successful. Returns count of promoted students.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  promotedCount:
+                    type: integer
+                  failedCount:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  # -------------------------------------------------------------------------
+  # SUBJECTS & CURRICULUM
+  # -------------------------------------------------------------------------
+  /subjects:
+    get:
+      summary: List all subjects
+      tags: [Curriculum]
+      responses:
+        '200':
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubjectResponse'
+    post:
+      summary: Create subject
+      tags: [Curriculum]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubjectRequest'
+      responses:
+        '201':
+          description: Subject created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectResponse'
+
+  /curriculum/subject-assignments:
+    get:
+      summary: List subject assignments for a class (Syllabus)
+      tags: [Curriculum]
+      parameters:
+        - name: academicYearId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of assigned subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubjectAssignmentResponse'
+    post:
+      summary: Assign subject to a class for an academic year
+      description: |
+        Assign syllabus/subject to a class.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Curriculum]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubjectAssignmentRequest'
+      responses:
+        '201':
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectAssignmentResponse'
+
+  /curriculum/staff-assignments:
+    post:
+      summary: Assign staff to teach a subject in a specific class section
+      description: |
+        Assign teacher to subject and section.
+        AcademicYear is explicit to avoid ambiguity and support multi-year data.
+      tags: [Curriculum]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStaffAssignmentRequest'
+      responses:
+        '201':
+          description: Staff assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffAssignmentResponse'
+
+  # -------------------------------------------------------------------------
+  # CLASSROOMS
+  # -------------------------------------------------------------------------
+  /classrooms:
+    get:
+      summary: List physical classrooms
+      description: |
+        List all physical classrooms.
+        Classroom assignment is OPTIONAL, MUTABLE, and changes do NOT affect Enrollment, Roll numbers, or Academic history.
+      tags: [Classrooms]
+      responses:
+        '200':
+          description: List of classrooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassroomResponse'
+    post:
+      summary: Create physical classroom
+      description: |
+        Define a new physical classroom.
+        Classroom assignment is OPTIONAL, MUTABLE, and changes do NOT affect Enrollment, Roll numbers, or Academic history.
+      tags: [Classrooms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassroomRequest'
+      responses:
+        '201':
+          description: Classroom created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassroomResponse'
+
+# ---------------------------------------------------------------------------
+# COMPONENTS
+# ---------------------------------------------------------------------------
+components:
+  schemas:
+    # --- Student ---
+    StudentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        admissionNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dob:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female, Other]
+        joiningDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [Active, Alumni, Withdrawn]
+        userId:
+          type: string
+          nullable: true
+
+    CreateStudentRequest:
+      type: object
+      required: [admissionNumber, firstName, lastName, dob, gender, joiningDate]
+      properties:
+        admissionNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dob:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female, Other]
+        joiningDate:
+          type: string
+          format: date
+        bloodGroup:
+          type: string
+        address:
+          type: string
+
+    LinkGuardianRequest:
+      type: object
+      required: [parentId, relationship]
+      properties:
+        parentId:
+          type: string
+          format: uuid
+        relationship:
+          type: string
+          enum: [Mother, Father, Guardian, Other]
+        isPrimaryContact:
+          type: boolean
+          default: false
+
+    # --- Parent ---
+    ParentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        relationship:
+          type: string
+
+    CreateParentRequest:
+      type: object
+      required: [firstName, lastName, mobile, relationship]
+      properties:
+        userId:
+          type: string
+          description: "Optional reference to existing Identity Service User ID"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        relationship:
+          type: string
+          enum: [Mother, Father, Guardian]
+        address:
+          type: string
+
+    # --- Staff ---
+    StaffResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        designation:
+          type: string
+        qualification:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+
+    CreateStaffRequest:
+      type: object
+      required: [employeeId, firstName, lastName, designation]
+      properties:
+        employeeId:
+          type: string
+        userId:
+          type: string
+          description: "Optional reference to existing Identity Service User ID"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        designation:
+          type: string
+        qualification:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+
+    StaffAssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        staffName:
+          type: string
+        subjectName:
+          type: string
+        classSectionName:
+          type: string
+
+    CreateStaffAssignmentRequest:
+      type: object
+      required: [staffId, subjectId, classSectionId, academicYearId]
+      properties:
+        staffId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        subjectId:
+          type: string
+          format: uuid
+        classSectionId:
+          type: string
+          format: uuid
+
+    # --- Academic Structure ---
+    AcademicYearResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "2025-2026"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isCurrent:
+          type: boolean
+
+    CreateAcademicYearRequest:
+      type: object
+      required: [name, startDate, endDate]
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isCurrent:
+          type: boolean
+          default: false
+
+    ClassResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Grade 5"
+        levelOrder:
+          type: integer
+        description:
+          type: string
+
+    CreateClassRequest:
+      type: object
+      required: [name, levelOrder]
+      properties:
+        name:
+          type: string
+        levelOrder:
+          type: integer
+        description:
+          type: string
+
+    SectionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "A"
+
+    CreateSectionRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    ClassSectionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        className:
+          type: string
+        sectionName:
+          type: string
+        academicYear:
+          type: string
+        medium:
+          type: string
+        classTeacherId:
+          type: string
+          format: uuid
+          nullable: true
+        classroomId:
+          type: string
+          format: uuid
+          nullable: true
+
+    CreateClassSectionRequest:
+      type: object
+      required: [classId, sectionId, academicYearId]
+      properties:
+        classId:
+          type: string
+          format: uuid
+        sectionId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        medium:
+          type: string
+          default: "English"
+
+    UpdateClassSectionRequest:
+      type: object
+      properties:
+        classTeacherId:
+          type: string
+          format: uuid
+          description: "Optional: Assign class teacher"
+        classroomId:
+          type: string
+          format: uuid
+          description: "Optional: Assign physical room"
+        medium:
+          type: string
+
+    # --- Enrollment ---
+    EnrollmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        studentName:
+            type: string
+        classSectionId:
+          type: string
+          format: uuid
+        rollNumber:
+          type: string
+        status:
+          type: string
+          enum: [Active, Promoted, Detained, Withdrawn]
+        enrollmentDate:
+          type: string
+          format: date
+
+    CreateEnrollmentRequest:
+      type: object
+      required: [studentId, classSectionId, academicYearId]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        classSectionId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        rollNumber:
+          type: string
+          description: "Optional at creation, can be assigned later"
+        status:
+          type: string
+          default: Active
+
+    UpdateRollNumberRequest:
+      type: object
+      required: [enrollmentId, rollNumber]
+      properties:
+        academicYearId:
+          type: string
+          format: uuid
+          description: "Explicit reference for verification"
+        enrollmentId:
+          type: string
+          format: uuid
+        rollNumber:
+          type: string
+
+    BulkPromoteRequest:
+      type: object
+      required: [sourceAcademicYearId, targetAcademicYearId]
+      properties:
+        sourceAcademicYearId:
+          type: string
+          format: uuid
+        sourceClassSectionId:
+          type: string
+          format: uuid
+          description: "Optional: Promote all from this section"
+        studentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Explicit list of students to promote"
+        targetClassSectionId:
+          type: string
+          format: uuid
+          description: "Target class section for the next year"
+        targetAcademicYearId:
+          type: string
+          format: uuid
+        promotionStatus:
+          type: string
+          enum: [Promoted, Detained]
+          default: Promoted
+
+    # --- Curriculum ---
+    SubjectResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        subjectCode:
+          type: string
+        isOptional:
+          type: boolean
+        type:
+          type: string
+          enum: [Theory, Practical]
+
+    CreateSubjectRequest:
+      type: object
+      required: [name, subjectCode, type]
+      properties:
+        name:
+          type: string
+        subjectCode:
+          type: string
+        isOptional:
+          type: boolean
+          default: false
+        type:
+          type: string
+          enum: [Theory, Practical]
+
+    SubjectAssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subjectName:
+          type: string
+        className:
+          type: string
+        sectionName:
+          type: string
+          nullable: true
+          description: "If null, applies to all sections"
+
+    CreateSubjectAssignmentRequest:
+      type: object
+      required: [subjectId, classId, academicYearId]
+      properties:
+        subjectId:
+          type: string
+          format: uuid
+        classId:
+          type: string
+          format: uuid
+        academicYearId:
+          type: string
+          format: uuid
+        sectionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Optional: Restrict subject to specific section"
+
+    # --- Classroom ---
+    ClassroomResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+        capacity:
+          type: integer
+        infraType:
+          type: string
+          enum: [Lecture, Lab, Hall]
+        buildingBlock:
+          type: string
+
+    CreateClassroomRequest:
+      type: object
+      required: [roomNumber, capacity, infraType]
+      properties:
+        roomNumber:
+          type: string
+        capacity:
+          type: integer
+        infraType:
+          type: string
+          enum: [Lecture, Lab, Hall]
+        buildingBlock:
+          type: string
+
