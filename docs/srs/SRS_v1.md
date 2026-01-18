@@ -275,6 +275,23 @@ _Attendance service never owns student data, only references IDs._
 - A service may only write to its own schema
 - Cross-service data access is via APIs only
 
+### 6.3 Schema Naming Convention
+
+- Each service must use a dedicated schema matching the service name in snake_case
+  - `identity_service` for identity-service
+  - `academic_core` for academic-core-service
+  - `attendance_service` for attendance-service
+  - `assessment_service` for assessment-service
+  - `finance_service` for finance-service
+  - `notification_service` for notification-service
+
+### 6.4 Database Migration Strategy
+
+- **Flyway** is the mandated migration tool for all services
+- All schema changes must be version-controlled via migration scripts
+- Hibernate DDL-auto must be set to `validate` in production
+- Local development may use `update` mode for convenience
+
 ---
 
 ## 7. API DESIGN PRINCIPLES
@@ -285,11 +302,75 @@ _Attendance service never owns student data, only references IDs._
 - Versioned endpoints (`/api/v1`)
 - Internal APIs prefixed with `/internal`
 
+### 7.1 Inter-Service Communication
+
+- Services **must** communicate via HTTP REST APIs only
+- No direct database access to other service schemas
+- No shared message queues or event buses in MVP
+- HTTP timeouts must be configured per downstream service
+- Circuit breaker pattern optional but recommended for resilience
+
+### 7.2 Database Connection Requirements
+
+- All services must use environment variables for database configuration:
+  - `DB_HOST` - Database server hostname/IP
+  - `DB_PORT` - Database server port (default: 3306)
+  - `DB_USER` - Database user
+  - `DB_PASS` - Database password
+  - `DB_NAME` - Schema name (service-specific)
+- Connection pooling must use HikariCP
+- Max connection pool size: 10 for MVP (single EC2 instance)
+- All datasource configs must support both local and production environments
+
 ---
 
-## 8. DEVELOPMENT & DELIVERY PLAN
+## 8. OPERABILITY & OBSERVABILITY REQUIREMENTS
 
-### 8.1 Implementation Order
+### 8.1 Health Checks
+
+- All services must expose `/actuator/health` endpoint
+- Health check response must include:
+  - `status`: UP or DOWN
+  - `components.db`: database connectivity
+- Used by Docker health checks and load balancers
+
+### 8.2 Actuator Configuration
+
+Production actuator exposure must be limited to:
+- `health` - service health status
+- `info` - service metadata
+- `prometheus` (optional) - metrics export
+- `health/liveness` and `health/readiness` for orchestration
+
+Endpoints to **exclude** from production: 
+- `env` - environment variables (security)
+- `configprops` - configuration properties
+- `beans` - bean definitions
+
+### 8.3 Logging Standards
+
+- Log level for application code: `INFO` in production, `DEBUG` in local
+- Log level for Spring Framework: `WARN` in production
+- Log level for Hibernate SQL: `WARN` in production
+- No sensitive data in logs (passwords, tokens, PII)
+- Logs must be consumable by centralized log aggregation tools (future)
+
+### 8.4 Metrics & Monitoring
+
+- Services must export Prometheus-compatible metrics (via Micrometer)
+- Minimum metrics: request count, response time, error count
+- Service-specific metrics: 
+  - Authentication: login attempts, token issuance
+  - Academic: student enrollments, attendance records
+  - Assessment: exam submissions, result processing
+
+---
+
+## 9. DEVELOPMENT & DELIVERY PLAN
+
+### 9. IMPLEMENTATION ORDER
+
+### 9.1 Implementation Sequence
 
 1. identity-service
 2. api-gateway
@@ -299,7 +380,7 @@ _Attendance service never owns student data, only references IDs._
 6. finance-service
 7. notification-service
 
-### 8.2 Estimated Timeline (10–14 hrs/day with AI)
+### 9.2 Estimated Timeline (10–14 hrs/day with AI)
 
 | Phase                   | Duration      |
 |-------------------------|--------------|
@@ -313,7 +394,7 @@ _Attendance service never owns student data, only references IDs._
 
 ---
 
-## 9. OUT OF SCOPE (EXPLICIT)
+## 10. OUT OF SCOPE (EXPLICIT)
 
 - Mobile apps
 - Push notifications
@@ -323,7 +404,7 @@ _Attendance service never owns student data, only references IDs._
 
 ---
 
-## 10. LONG-TERM VISION
+## 11. LONG-TERM VISION
 
 Future enhancements may include:
 
@@ -337,7 +418,7 @@ _These are explicitly excluded from MVP._
 
 ---
 
-## 11. AI USAGE GUIDELINES (CRITICAL)
+## 12. AI USAGE GUIDELINES (CRITICAL)
 
 AI agents must:
 
@@ -346,3 +427,73 @@ AI agents must:
 - Avoid introducing new services
 - Avoid shared libraries for business logic
 - Use Java 17 + Spring Boot 3 only
+
+---
+
+## 13. IMPLEMENTATION FINDINGS & COMPLIANCE (v1.0)
+
+### 13.1 Identity-Service Compliance
+
+**Status:** ✅ COMPLIANT with minor documentation notes
+
+- ✅ Java 17 + Spring Boot 3.2.0
+- ✅ JWT-based authentication implemented (JJWT library)
+- ✅ Constructor injection enforced
+- ✅ DTO-based API contracts
+- ✅ Role-based authorization (Role, Permission entities)
+- ✅ Password hashing with bcrypt
+- ⚠️ **NOTE:** No explicit Flyway migration setup (relies on Hibernate DDL-auto in local)
+  - **Action:** Future versions should migrate to Flyway for production-grade schema versioning
+- ⚠️ **NOTE:** Database schema not explicitly defined in @Table annotations (defaults to root schema)
+  - **Action:** Recommend using `@Table(name = "users", schema = "identity_service")` pattern for clarity
+- ✅ Actuator endpoints configured with proper exposure limits
+- ✅ Separate application profiles for local and production (application-local.yml, application-prod.yml)
+
+### 13.2 Academic-Core-Service Compliance
+
+**Status:** ✅ COMPLIANT
+
+- ✅ Java 17 + Spring Boot 3.2.1
+- ✅ Proper schema-per-service implementation (`academic_core` schema explicitly defined)
+- ✅ Flyway migration framework configured correctly
+- ✅ Database configuration uses environment variables (DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME)
+- ✅ Constructor injection enforced
+- ✅ DTO-based API contracts (StudentResponse, CreateStudentRequest, etc.)
+- ✅ Controller → Service → Repository pattern
+- ✅ Actuator endpoints configured
+- ✅ Prometheus metrics support
+- ✅ HikariCP connection pooling (max-pool-size: 10)
+- ✅ Separate profiles for local and production
+
+### 13.3 Critical Implementation Notes for Future Services
+
+1. **Database Schema Pattern:** Follow academic-core-service pattern:
+   ```java
+   @Table(name = "entity_name", schema = "service_name_snake_case")
+   ```
+
+2. **Database Configuration:** Always use environment variables:
+   ```yaml
+   datasource:
+     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME}?useSSL=false&serverTimezone=UTC
+     username: ${DB_USER}
+     password: ${DB_PASS}
+   ```
+
+3. **Migration Framework:** Implement Flyway migrations from day one (not lazy-loaded DDL-auto)
+
+4. **Connection Pooling:** Default to HikariCP with max-pool-size: 10 for MVP
+
+5. **Health Checks:** Ensure `/actuator/health` includes database component status
+
+### 13.4 API Gateway Implementation Status
+
+**Status:** ⏳ PENDING
+
+- Currently a placeholder directory (.keep file only)
+- Must implement before progressing to remaining business services
+- Should include:
+  - JWT token validation (calls identity-service /internal endpoint)
+  - Request routing to downstream services
+  - Rate limiting (future)
+  - Request/response logging (future)
