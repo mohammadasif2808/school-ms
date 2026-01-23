@@ -14,7 +14,6 @@ import java.util.UUID;
 public interface PostalRecordService {
 
     PostalRecordPageResponse listPostalRecords(
-            UUID schoolId,
             UUID academicYearId,
             PostalDirection direction,
             PostalType postalType,
@@ -23,7 +22,7 @@ public interface PostalRecordService {
             String search,
             Pageable pageable);
 
-    PostalRecordResponse createPostalRecord(UUID schoolId, UUID academicYearId, CreatePostalRecordRequest request);
+    PostalRecordResponse createPostalRecord(UUID academicYearId, CreatePostalRecordRequest request);
 
-    PostalRecordResponse getPostalRecordById(UUID schoolId, UUID id);
+    PostalRecordResponse getPostalRecordById(UUID id);
 }

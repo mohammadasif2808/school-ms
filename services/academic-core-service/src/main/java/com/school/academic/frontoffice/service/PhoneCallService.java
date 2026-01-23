@@ -13,7 +13,6 @@ import java.util.UUID;
 public interface PhoneCallService {
 
     PhoneCallPageResponse listPhoneCalls(
-            UUID schoolId,
             UUID academicYearId,
             CallType callType,
             LocalDate fromDate,
@@ -22,7 +21,7 @@ public interface PhoneCallService {
             String search,
             Pageable pageable);
 
-    PhoneCallResponse createPhoneCall(UUID schoolId, UUID academicYearId, CreatePhoneCallRequest request);
+    PhoneCallResponse createPhoneCall(UUID academicYearId, CreatePhoneCallRequest request);
 
-    PhoneCallResponse getPhoneCallById(UUID schoolId, UUID id);
+    PhoneCallResponse getPhoneCallById(UUID id);
 }

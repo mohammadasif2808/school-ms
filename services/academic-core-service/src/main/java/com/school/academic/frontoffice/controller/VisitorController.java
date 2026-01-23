@@ -34,8 +34,6 @@ public class VisitorController {
     @GetMapping
     @Operation(summary = "List visitors", description = "Retrieve a paginated list of visitors with optional filters.")
     public ResponseEntity<VisitorPageResponse> listVisitors(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by visit purpose")
@@ -51,43 +49,37 @@ public class VisitorController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         VisitorPageResponse response = visitorService.listVisitors(
-                schoolId, academicYearId, purpose, fromDate, toDate, search, checkedOut, pageable);
+                academicYearId, purpose, fromDate, toDate, search, checkedOut, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Add visitor", description = "Record a new visitor entry.")
     public ResponseEntity<VisitorResponse> createVisitor(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreateVisitorRequest request) {
 
-        VisitorResponse response = visitorService.createVisitor(schoolId, academicYearId, request);
+        VisitorResponse response = visitorService.createVisitor(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get visitor details", description = "Retrieve details of a specific visitor entry.")
     public ResponseEntity<VisitorResponse> getVisitorById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        VisitorResponse response = visitorService.getVisitorById(schoolId, id);
+        VisitorResponse response = visitorService.getVisitorById(id);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/checkout")
     @Operation(summary = "Update visitor checkout time", description = "Record the checkout time for a visitor.")
     public ResponseEntity<VisitorResponse> checkoutVisitor(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id,
             @Valid @RequestBody VisitorCheckoutRequest request) {
 
-        VisitorResponse response = visitorService.checkoutVisitor(schoolId, id, request);
+        VisitorResponse response = visitorService.checkoutVisitor(id, request);
         return ResponseEntity.ok(response);
     }
 }

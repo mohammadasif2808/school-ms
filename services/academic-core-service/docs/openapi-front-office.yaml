@@ -12,7 +12,7 @@ info:
     - Admission Enquiries
     - Complaints
     
-    All operations are scoped to a specific school and academic year.
+    This is a single-school deployment. All operations are scoped to the current academic year.
   version: 1.0.0
 servers:
   - url: /api/v1

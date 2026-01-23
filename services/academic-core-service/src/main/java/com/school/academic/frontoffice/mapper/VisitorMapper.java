@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class VisitorMapper {
 
-    public Visitor toEntity(CreateVisitorRequest request, UUID schoolId, UUID academicYearId) {
+    public Visitor toEntity(CreateVisitorRequest request, UUID academicYearId) {
         Visitor visitor = new Visitor();
-        visitor.setSchoolId(schoolId);
         visitor.setAcademicYearId(academicYearId);
         visitor.setVisitorName(request.getVisitorName());
         visitor.setPhoneNumber(request.getPhoneNumber());

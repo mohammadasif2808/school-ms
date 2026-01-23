@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class PostalRecordMapper {
 
-    public PostalRecord toEntity(CreatePostalRecordRequest request, UUID schoolId, UUID academicYearId) {
+    public PostalRecord toEntity(CreatePostalRecordRequest request, UUID academicYearId) {
         PostalRecord record = new PostalRecord();
-        record.setSchoolId(schoolId);
         record.setAcademicYearId(academicYearId);
         record.setDirection(request.getDirection());
         record.setPostalType(request.getPostalType());

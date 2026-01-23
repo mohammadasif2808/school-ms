@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class AdmissionEnquiryMapper {
 
-    public AdmissionEnquiry toEntity(CreateAdmissionEnquiryRequest request, UUID schoolId, UUID academicYearId) {
+    public AdmissionEnquiry toEntity(CreateAdmissionEnquiryRequest request, UUID academicYearId) {
         AdmissionEnquiry enquiry = new AdmissionEnquiry();
-        enquiry.setSchoolId(schoolId);
         enquiry.setAcademicYearId(academicYearId);
         enquiry.setEnquirerName(request.getEnquirerName());
         enquiry.setPhoneNumber(request.getPhoneNumber());

@@ -12,7 +12,6 @@ import java.util.UUID;
 public interface HalfDayNoticeService {
 
     HalfDayNoticePageResponse listHalfDayNotices(
-            UUID schoolId,
             UUID academicYearId,
             UUID classId,
             UUID sectionId,
@@ -21,7 +20,7 @@ public interface HalfDayNoticeService {
             UUID studentId,
             Pageable pageable);
 
-    HalfDayNoticeResponse createHalfDayNotice(UUID schoolId, UUID academicYearId, CreateHalfDayNoticeRequest request);
+    HalfDayNoticeResponse createHalfDayNotice(UUID academicYearId, CreateHalfDayNoticeRequest request);
 
-    HalfDayNoticeResponse getHalfDayNoticeById(UUID schoolId, UUID id);
+    HalfDayNoticeResponse getHalfDayNoticeById(UUID id);
 }

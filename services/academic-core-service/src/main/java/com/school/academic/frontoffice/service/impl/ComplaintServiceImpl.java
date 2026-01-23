@@ -48,7 +48,6 @@ public class ComplaintServiceImpl implements ComplaintService {
     @Override
     @Transactional(readOnly = true)
     public ComplaintPageResponse listComplaints(
-            UUID schoolId,
             UUID academicYearId,
             ComplaintStatus status,
             ComplaintType complaintType,
@@ -66,7 +65,7 @@ public class ComplaintServiceImpl implements ComplaintService {
         Long staffIdLong = assignedToStaffId != null ? assignedToStaffId.getMostSignificantBits() : null;
 
         Page<Complaint> page = complaintRepository.findAllWithFilters(
-                schoolId, academicYearId, status, complaintType, category, staffIdLong, fromDate, toDate, search, pageable);
+                academicYearId, status, complaintType, category, staffIdLong, fromDate, toDate, search, pageable);
 
         return new ComplaintPageResponse(
                 page.getContent().stream().map(complaintMapper::toResponse).collect(Collectors.toList()),
@@ -75,14 +74,14 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public ComplaintResponse createComplaint(UUID schoolId, UUID academicYearId, CreateComplaintRequest request) {
+    public ComplaintResponse createComplaint(UUID academicYearId, CreateComplaintRequest request) {
         // Validate complaint date is not in future
         if (request.getComplaintDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("INVALID_COMPLAINT_DATE",
                     "Complaint date cannot be in the future");
         }
 
-        Complaint complaint = complaintMapper.toEntity(request, schoolId, academicYearId);
+        Complaint complaint = complaintMapper.toEntity(request, academicYearId);
         // TODO: Set createdBy from security context
         Complaint saved = complaintRepository.save(complaint);
         return complaintMapper.toResponse(saved);
@@ -90,15 +89,15 @@ public class ComplaintServiceImpl implements ComplaintService {
 
     @Override
     @Transactional(readOnly = true)
-    public ComplaintResponse getComplaintById(UUID schoolId, UUID id) {
-        Complaint complaint = complaintRepository.findByIdAndSchoolId(id, schoolId)
+    public ComplaintResponse getComplaintById(UUID id) {
+        Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + id));
         return complaintMapper.toResponse(complaint);
     }
 
     @Override
-    public ComplaintResponse assignComplaint(UUID schoolId, UUID id, AssignComplaintRequest request) {
-        Complaint complaint = complaintRepository.findByIdAndSchoolId(id, schoolId)
+    public ComplaintResponse assignComplaint(UUID id, AssignComplaintRequest request) {
+        Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + id));
 
         // Cannot assign closed complaints
@@ -132,8 +131,8 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public ComplaintResponse updateComplaintStatus(UUID schoolId, UUID id, UpdateComplaintStatusRequest request) {
-        Complaint complaint = complaintRepository.findByIdAndSchoolId(id, schoolId)
+    public ComplaintResponse updateComplaintStatus(UUID id, UpdateComplaintStatusRequest request) {
+        Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + id));
 
         ComplaintStatus currentStatus = complaint.getComplaintStatus();

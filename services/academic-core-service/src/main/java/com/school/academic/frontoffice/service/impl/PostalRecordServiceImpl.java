@@ -37,7 +37,6 @@ public class PostalRecordServiceImpl implements PostalRecordService {
     @Override
     @Transactional(readOnly = true)
     public PostalRecordPageResponse listPostalRecords(
-            UUID schoolId,
             UUID academicYearId,
             PostalDirection direction,
             PostalType postalType,
@@ -50,7 +49,7 @@ public class PostalRecordServiceImpl implements PostalRecordService {
         validateDateRange(fromDate, toDate);
 
         Page<PostalRecord> page = postalRecordRepository.findAllWithFilters(
-                schoolId, academicYearId, direction, postalType, fromDate, toDate, search, pageable);
+                academicYearId, direction, postalType, fromDate, toDate, search, pageable);
 
         return new PostalRecordPageResponse(
                 page.getContent().stream().map(postalRecordMapper::toResponse).collect(Collectors.toList()),
@@ -59,7 +58,7 @@ public class PostalRecordServiceImpl implements PostalRecordService {
     }
 
     @Override
-    public PostalRecordResponse createPostalRecord(UUID schoolId, UUID academicYearId, CreatePostalRecordRequest request) {
+    public PostalRecordResponse createPostalRecord(UUID academicYearId, CreatePostalRecordRequest request) {
         // Validate postal date is not in future (for received items)
         if (request.getDirection() == PostalDirection.RECEIVED &&
             request.getDate().isAfter(LocalDate.now())) {
@@ -75,7 +74,7 @@ public class PostalRecordServiceImpl implements PostalRecordService {
             }
         }
 
-        PostalRecord record = postalRecordMapper.toEntity(request, schoolId, academicYearId);
+        PostalRecord record = postalRecordMapper.toEntity(request, academicYearId);
         // TODO: Set createdBy from security context
         PostalRecord saved = postalRecordRepository.save(record);
         return postalRecordMapper.toResponse(saved);
@@ -83,8 +82,8 @@ public class PostalRecordServiceImpl implements PostalRecordService {
 
     @Override
     @Transactional(readOnly = true)
-    public PostalRecordResponse getPostalRecordById(UUID schoolId, UUID id) {
-        PostalRecord record = postalRecordRepository.findByIdAndSchoolId(id, schoolId)
+    public PostalRecordResponse getPostalRecordById(UUID id) {
+        PostalRecord record = postalRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Postal record not found with id: " + id));
         return postalRecordMapper.toResponse(record);
     }

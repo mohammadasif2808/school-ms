@@ -38,7 +38,6 @@ public class VisitorServiceImpl implements VisitorService {
     @Override
     @Transactional(readOnly = true)
     public VisitorPageResponse listVisitors(
-            UUID schoolId,
             UUID academicYearId,
             String purpose,
             LocalDate fromDate,
@@ -51,7 +50,7 @@ public class VisitorServiceImpl implements VisitorService {
         validateDateRange(fromDate, toDate);
 
         Page<Visitor> page = visitorRepository.findAllWithFilters(
-                schoolId, academicYearId, purpose, fromDate, toDate, search, checkedOut, pageable);
+                academicYearId, purpose, fromDate, toDate, search, checkedOut, pageable);
 
         return new VisitorPageResponse(
                 page.getContent().stream().map(visitorMapper::toResponse).collect(Collectors.toList()),
@@ -60,7 +59,7 @@ public class VisitorServiceImpl implements VisitorService {
     }
 
     @Override
-    public VisitorResponse createVisitor(UUID schoolId, UUID academicYearId, CreateVisitorRequest request) {
+    public VisitorResponse createVisitor(UUID academicYearId, CreateVisitorRequest request) {
         // Validate check-in time is not in future
         if (request.getCheckInTime().isAfter(LocalDateTime.now())) {
             throw new BusinessRuleException("INVALID_CHECK_IN_TIME",
@@ -73,7 +72,7 @@ public class VisitorServiceImpl implements VisitorService {
                     "Number of persons cannot exceed 100");
         }
 
-        Visitor visitor = visitorMapper.toEntity(request, schoolId, academicYearId);
+        Visitor visitor = visitorMapper.toEntity(request, academicYearId);
         // TODO: Set createdBy from security context
         Visitor saved = visitorRepository.save(visitor);
         return visitorMapper.toResponse(saved);
@@ -81,15 +80,15 @@ public class VisitorServiceImpl implements VisitorService {
 
     @Override
     @Transactional(readOnly = true)
-    public VisitorResponse getVisitorById(UUID schoolId, UUID id) {
-        Visitor visitor = visitorRepository.findByIdAndSchoolId(id, schoolId)
+    public VisitorResponse getVisitorById(UUID id) {
+        Visitor visitor = visitorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Visitor not found with id: " + id));
         return visitorMapper.toResponse(visitor);
     }
 
     @Override
-    public VisitorResponse checkoutVisitor(UUID schoolId, UUID id, VisitorCheckoutRequest request) {
-        Visitor visitor = visitorRepository.findByIdAndSchoolId(id, schoolId)
+    public VisitorResponse checkoutVisitor(UUID id, VisitorCheckoutRequest request) {
+        Visitor visitor = visitorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Visitor not found with id: " + id));
 
         // Validate visitor is not already checked out

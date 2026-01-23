@@ -50,7 +50,6 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
     @Override
     @Transactional(readOnly = true)
     public AdmissionEnquiryPageResponse listAdmissionEnquiries(
-            UUID schoolId,
             UUID academicYearId,
             EnquiryStatus status,
             EnquirySource source,
@@ -65,7 +64,7 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
         validateDateRange(fromDate, toDate);
 
         Page<AdmissionEnquiry> page = admissionEnquiryRepository.findAllWithFilters(
-                schoolId, academicYearId, status, source, enquiryType, fromDate, toDate, hasFollowUp, search, pageable);
+                academicYearId, status, source, enquiryType, fromDate, toDate, hasFollowUp, search, pageable);
 
         return new AdmissionEnquiryPageResponse(
                 page.getContent().stream().map(admissionEnquiryMapper::toResponse).collect(Collectors.toList()),
@@ -74,7 +73,7 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
     }
 
     @Override
-    public AdmissionEnquiryResponse createAdmissionEnquiry(UUID schoolId, UUID academicYearId, CreateAdmissionEnquiryRequest request) {
+    public AdmissionEnquiryResponse createAdmissionEnquiry(UUID academicYearId, CreateAdmissionEnquiryRequest request) {
         // Validate enquiry date is not in future
         if (request.getEnquiryDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("INVALID_ENQUIRY_DATE",
@@ -88,7 +87,7 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
                     "Next follow-up date must be on or after the enquiry date");
         }
 
-        AdmissionEnquiry enquiry = admissionEnquiryMapper.toEntity(request, schoolId, academicYearId);
+        AdmissionEnquiry enquiry = admissionEnquiryMapper.toEntity(request, academicYearId);
         // TODO: Set createdBy from security context
         AdmissionEnquiry saved = admissionEnquiryRepository.save(enquiry);
         return admissionEnquiryMapper.toResponse(saved);
@@ -96,15 +95,15 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
 
     @Override
     @Transactional(readOnly = true)
-    public AdmissionEnquiryResponse getAdmissionEnquiryById(UUID schoolId, UUID id) {
-        AdmissionEnquiry enquiry = admissionEnquiryRepository.findByIdAndSchoolId(id, schoolId)
+    public AdmissionEnquiryResponse getAdmissionEnquiryById(UUID id) {
+        AdmissionEnquiry enquiry = admissionEnquiryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission enquiry not found with id: " + id));
         return admissionEnquiryMapper.toResponse(enquiry);
     }
 
     @Override
-    public AdmissionEnquiryResponse updateEnquiryStatus(UUID schoolId, UUID id, UpdateEnquiryStatusRequest request) {
-        AdmissionEnquiry enquiry = admissionEnquiryRepository.findByIdAndSchoolId(id, schoolId)
+    public AdmissionEnquiryResponse updateEnquiryStatus(UUID id, UpdateEnquiryStatusRequest request) {
+        AdmissionEnquiry enquiry = admissionEnquiryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission enquiry not found with id: " + id));
 
         EnquiryStatus currentStatus = enquiry.getEnquiryStatus();
@@ -124,8 +123,8 @@ public class AdmissionEnquiryServiceImpl implements AdmissionEnquiryService {
     }
 
     @Override
-    public AdmissionEnquiryResponse updateEnquiryFollowUp(UUID schoolId, UUID id, UpdateEnquiryFollowUpRequest request) {
-        AdmissionEnquiry enquiry = admissionEnquiryRepository.findByIdAndSchoolId(id, schoolId)
+    public AdmissionEnquiryResponse updateEnquiryFollowUp(UUID id, UpdateEnquiryFollowUpRequest request) {
+        AdmissionEnquiry enquiry = admissionEnquiryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission enquiry not found with id: " + id));
 
         // Cannot update follow-up for closed or converted enquiries

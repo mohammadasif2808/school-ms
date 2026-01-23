@@ -36,7 +36,6 @@ public class PhoneCallServiceImpl implements PhoneCallService {
     @Override
     @Transactional(readOnly = true)
     public PhoneCallPageResponse listPhoneCalls(
-            UUID schoolId,
             UUID academicYearId,
             CallType callType,
             LocalDate fromDate,
@@ -49,7 +48,7 @@ public class PhoneCallServiceImpl implements PhoneCallService {
         validateDateRange(fromDate, toDate);
 
         Page<PhoneCall> page = phoneCallRepository.findAllWithFilters(
-                schoolId, academicYearId, callType, fromDate, toDate, hasFollowUp, search, pageable);
+                academicYearId, callType, fromDate, toDate, hasFollowUp, search, pageable);
 
         return new PhoneCallPageResponse(
                 page.getContent().stream().map(phoneCallMapper::toResponse).collect(Collectors.toList()),
@@ -58,7 +57,7 @@ public class PhoneCallServiceImpl implements PhoneCallService {
     }
 
     @Override
-    public PhoneCallResponse createPhoneCall(UUID schoolId, UUID academicYearId, CreatePhoneCallRequest request) {
+    public PhoneCallResponse createPhoneCall(UUID academicYearId, CreatePhoneCallRequest request) {
         // Validate call date is not in future
         if (request.getCallDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("INVALID_CALL_DATE",
@@ -78,7 +77,7 @@ public class PhoneCallServiceImpl implements PhoneCallService {
                     "Call duration cannot exceed 480 minutes (8 hours)");
         }
 
-        PhoneCall phoneCall = phoneCallMapper.toEntity(request, schoolId, academicYearId);
+        PhoneCall phoneCall = phoneCallMapper.toEntity(request, academicYearId);
         // TODO: Set createdBy from security context
         PhoneCall saved = phoneCallRepository.save(phoneCall);
         return phoneCallMapper.toResponse(saved);
@@ -86,8 +85,8 @@ public class PhoneCallServiceImpl implements PhoneCallService {
 
     @Override
     @Transactional(readOnly = true)
-    public PhoneCallResponse getPhoneCallById(UUID schoolId, UUID id) {
-        PhoneCall phoneCall = phoneCallRepository.findByIdAndSchoolId(id, schoolId)
+    public PhoneCallResponse getPhoneCallById(UUID id) {
+        PhoneCall phoneCall = phoneCallRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Phone call not found with id: " + id));
         return phoneCallMapper.toResponse(phoneCall);
     }

@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class PhoneCallMapper {
 
-    public PhoneCall toEntity(CreatePhoneCallRequest request, UUID schoolId, UUID academicYearId) {
+    public PhoneCall toEntity(CreatePhoneCallRequest request, UUID academicYearId) {
         PhoneCall phoneCall = new PhoneCall();
-        phoneCall.setSchoolId(schoolId);
         phoneCall.setAcademicYearId(academicYearId);
         phoneCall.setCallerName(request.getCallerName());
         phoneCall.setPhoneNumber(request.getPhoneNumber());

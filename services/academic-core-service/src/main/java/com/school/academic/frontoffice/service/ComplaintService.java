@@ -14,7 +14,6 @@ import java.util.UUID;
 public interface ComplaintService {
 
     ComplaintPageResponse listComplaints(
-            UUID schoolId,
             UUID academicYearId,
             ComplaintStatus status,
             ComplaintType complaintType,
@@ -25,11 +24,11 @@ public interface ComplaintService {
             String search,
             Pageable pageable);
 
-    ComplaintResponse createComplaint(UUID schoolId, UUID academicYearId, CreateComplaintRequest request);
+    ComplaintResponse createComplaint(UUID academicYearId, CreateComplaintRequest request);
 
-    ComplaintResponse getComplaintById(UUID schoolId, UUID id);
+    ComplaintResponse getComplaintById(UUID id);
 
-    ComplaintResponse assignComplaint(UUID schoolId, UUID id, AssignComplaintRequest request);
+    ComplaintResponse assignComplaint(UUID id, AssignComplaintRequest request);
 
-    ComplaintResponse updateComplaintStatus(UUID schoolId, UUID id, UpdateComplaintStatusRequest request);
+    ComplaintResponse updateComplaintStatus(UUID id, UpdateComplaintStatusRequest request);
 }

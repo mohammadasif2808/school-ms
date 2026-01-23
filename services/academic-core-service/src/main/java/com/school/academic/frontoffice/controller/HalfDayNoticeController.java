@@ -34,8 +34,6 @@ public class HalfDayNoticeController {
     @GetMapping
     @Operation(summary = "List half day notices", description = "Retrieve a paginated list of half day notices.")
     public ResponseEntity<HalfDayNoticePageResponse> listHalfDayNotices(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by class")
@@ -51,31 +49,27 @@ public class HalfDayNoticeController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         HalfDayNoticePageResponse response = halfDayNoticeService.listHalfDayNotices(
-                schoolId, academicYearId, classId, sectionId, fromDate, toDate, studentId, pageable);
+                academicYearId, classId, sectionId, fromDate, toDate, studentId, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Create half day notice", description = "Record a student's early departure.")
     public ResponseEntity<HalfDayNoticeResponse> createHalfDayNotice(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreateHalfDayNoticeRequest request) {
 
-        HalfDayNoticeResponse response = halfDayNoticeService.createHalfDayNotice(schoolId, academicYearId, request);
+        HalfDayNoticeResponse response = halfDayNoticeService.createHalfDayNotice(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get half day notice details", description = "Retrieve details of a specific half day notice.")
     public ResponseEntity<HalfDayNoticeResponse> getHalfDayNoticeById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        HalfDayNoticeResponse response = halfDayNoticeService.getHalfDayNoticeById(schoolId, id);
+        HalfDayNoticeResponse response = halfDayNoticeService.getHalfDayNoticeById(id);
         return ResponseEntity.ok(response);
     }
 }

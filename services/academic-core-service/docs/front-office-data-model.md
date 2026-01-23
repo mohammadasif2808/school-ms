@@ -23,14 +23,13 @@ Strong auditability
 
 Academic-year aware
 
-Multi-school ready
+Single-school deployment (no multi-tenancy)
 
 3. Common Fields (Applicable to All Front Office Tables)
 
 All Front Office tables should include the following standard fields:
 
 id                     (UUID / BIGINT, PK)
-school_id              (FK → school)
 academic_year_id       (FK → academic_year)
 status                 (ACTIVE / CLOSED / ARCHIVED)
 remarks                (TEXT, optional)
@@ -38,6 +37,9 @@ created_at             (TIMESTAMP)
 created_by             (USER ID)
 updated_at             (TIMESTAMP)
 updated_by             (USER ID)
+
+Note: school_id is NOT included as this is a single-school deployment.
+Each school deployment gets its own isolated database instance.
 
 4. Front Office Modules & Data Models
    4.1 Visitors Log

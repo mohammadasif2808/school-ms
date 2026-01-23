@@ -36,8 +36,6 @@ public class PostalController {
     @GetMapping
     @Operation(summary = "List postal records", description = "Retrieve a paginated list of postal dispatch and receive records.")
     public ResponseEntity<PostalRecordPageResponse> listPostalRecords(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by direction (RECEIVED/DISPATCHED)")
@@ -53,31 +51,27 @@ public class PostalController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         PostalRecordPageResponse response = postalRecordService.listPostalRecords(
-                schoolId, academicYearId, direction, postalType, fromDate, toDate, search, pageable);
+                academicYearId, direction, postalType, fromDate, toDate, search, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Add postal record", description = "Record a new postal dispatch or receive entry.")
     public ResponseEntity<PostalRecordResponse> createPostalRecord(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreatePostalRecordRequest request) {
 
-        PostalRecordResponse response = postalRecordService.createPostalRecord(schoolId, academicYearId, request);
+        PostalRecordResponse response = postalRecordService.createPostalRecord(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get postal record details", description = "Retrieve details of a specific postal record.")
     public ResponseEntity<PostalRecordResponse> getPostalRecordById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        PostalRecordResponse response = postalRecordService.getPostalRecordById(schoolId, id);
+        PostalRecordResponse response = postalRecordService.getPostalRecordById(id);
         return ResponseEntity.ok(response);
     }
 }

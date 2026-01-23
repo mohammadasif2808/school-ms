@@ -8,13 +8,12 @@ import java.util.UUID;
 
 /**
  * Base entity for all Front Office entities.
- * Contains common fields: schoolId, academicYearId, status, remarks, and audit fields.
+ * Contains common fields: academicYearId, status, remarks, and audit fields.
+ * Note: This is a single-school deployment - no schoolId required.
  */
 @MappedSuperclass
 public abstract class FrontOfficeBaseEntity {
 
-    @Column(name = "school_id", nullable = false)
-    private UUID schoolId;
 
     @Column(name = "academic_year_id", nullable = false)
     private UUID academicYearId;
@@ -52,13 +51,6 @@ public abstract class FrontOfficeBaseEntity {
     }
 
     // Getters and Setters
-    public UUID getSchoolId() {
-        return schoolId;
-    }
-
-    public void setSchoolId(UUID schoolId) {
-        this.schoolId = schoolId;
-    }
 
     public UUID getAcademicYearId() {
         return academicYearId;

@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class ComplaintMapper {
 
-    public Complaint toEntity(CreateComplaintRequest request, UUID schoolId, UUID academicYearId) {
+    public Complaint toEntity(CreateComplaintRequest request, UUID academicYearId) {
         Complaint complaint = new Complaint();
-        complaint.setSchoolId(schoolId);
         complaint.setAcademicYearId(academicYearId);
         complaint.setComplainantName(request.getComplainantName());
         complaint.setComplaintType(request.getComplaintType());

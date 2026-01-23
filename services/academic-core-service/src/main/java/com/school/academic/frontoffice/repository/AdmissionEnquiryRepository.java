@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -21,7 +20,7 @@ import java.util.UUID;
 @Repository
 public interface AdmissionEnquiryRepository extends JpaRepository<AdmissionEnquiry, UUID> {
 
-    @Query("SELECT e FROM AdmissionEnquiry e WHERE e.schoolId = :schoolId AND e.academicYearId = :academicYearId " +
+    @Query("SELECT e FROM AdmissionEnquiry e WHERE e.academicYearId = :academicYearId " +
             "AND (:status IS NULL OR e.enquiryStatus = :status) " +
             "AND (:source IS NULL OR e.source = :source) " +
             "AND (:enquiryType IS NULL OR e.enquiryType = :enquiryType) " +
@@ -30,7 +29,6 @@ public interface AdmissionEnquiryRepository extends JpaRepository<AdmissionEnqui
             "AND (:hasFollowUp IS NULL OR (:hasFollowUp = true AND e.nextFollowUpDate IS NOT NULL) OR (:hasFollowUp = false AND e.nextFollowUpDate IS NULL)) " +
             "AND (:search IS NULL OR e.enquirerName LIKE %:search% OR e.phoneNumber LIKE %:search%)")
     Page<AdmissionEnquiry> findAllWithFilters(
-            @Param("schoolId") UUID schoolId,
             @Param("academicYearId") UUID academicYearId,
             @Param("status") EnquiryStatus status,
             @Param("source") EnquirySource source,
@@ -40,6 +38,4 @@ public interface AdmissionEnquiryRepository extends JpaRepository<AdmissionEnqui
             @Param("hasFollowUp") Boolean hasFollowUp,
             @Param("search") String search,
             Pageable pageable);
-
-    Optional<AdmissionEnquiry> findByIdAndSchoolId(UUID id, UUID schoolId);
 }

@@ -35,8 +35,6 @@ public class PhoneCallController {
     @GetMapping
     @Operation(summary = "List phone calls", description = "Retrieve a paginated list of phone call logs.")
     public ResponseEntity<PhoneCallPageResponse> listPhoneCalls(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by call type (INCOMING/OUTGOING)")
@@ -52,31 +50,27 @@ public class PhoneCallController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         PhoneCallPageResponse response = phoneCallService.listPhoneCalls(
-                schoolId, academicYearId, callType, fromDate, toDate, hasFollowUp, search, pageable);
+                academicYearId, callType, fromDate, toDate, hasFollowUp, search, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Log phone call", description = "Record a new phone call entry.")
     public ResponseEntity<PhoneCallResponse> createPhoneCall(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreatePhoneCallRequest request) {
 
-        PhoneCallResponse response = phoneCallService.createPhoneCall(schoolId, academicYearId, request);
+        PhoneCallResponse response = phoneCallService.createPhoneCall(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get phone call details", description = "Retrieve details of a specific phone call log.")
     public ResponseEntity<PhoneCallResponse> getPhoneCallById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        PhoneCallResponse response = phoneCallService.getPhoneCallById(schoolId, id);
+        PhoneCallResponse response = phoneCallService.getPhoneCallById(id);
         return ResponseEntity.ok(response);
     }
 }

@@ -12,7 +12,6 @@ import java.util.UUID;
 public interface VisitorService {
 
     VisitorPageResponse listVisitors(
-            UUID schoolId,
             UUID academicYearId,
             String purpose,
             LocalDate fromDate,
@@ -21,9 +20,9 @@ public interface VisitorService {
             Boolean checkedOut,
             Pageable pageable);
 
-    VisitorResponse createVisitor(UUID schoolId, UUID academicYearId, CreateVisitorRequest request);
+    VisitorResponse createVisitor(UUID academicYearId, CreateVisitorRequest request);
 
-    VisitorResponse getVisitorById(UUID schoolId, UUID id);
+    VisitorResponse getVisitorById(UUID id);
 
-    VisitorResponse checkoutVisitor(UUID schoolId, UUID id, VisitorCheckoutRequest request);
+    VisitorResponse checkoutVisitor(UUID id, VisitorCheckoutRequest request);
 }

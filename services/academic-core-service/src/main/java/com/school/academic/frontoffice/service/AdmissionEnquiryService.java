@@ -15,7 +15,6 @@ import java.util.UUID;
 public interface AdmissionEnquiryService {
 
     AdmissionEnquiryPageResponse listAdmissionEnquiries(
-            UUID schoolId,
             UUID academicYearId,
             EnquiryStatus status,
             EnquirySource source,
@@ -26,11 +25,11 @@ public interface AdmissionEnquiryService {
             String search,
             Pageable pageable);
 
-    AdmissionEnquiryResponse createAdmissionEnquiry(UUID schoolId, UUID academicYearId, CreateAdmissionEnquiryRequest request);
+    AdmissionEnquiryResponse createAdmissionEnquiry(UUID academicYearId, CreateAdmissionEnquiryRequest request);
 
-    AdmissionEnquiryResponse getAdmissionEnquiryById(UUID schoolId, UUID id);
+    AdmissionEnquiryResponse getAdmissionEnquiryById(UUID id);
 
-    AdmissionEnquiryResponse updateEnquiryStatus(UUID schoolId, UUID id, UpdateEnquiryStatusRequest request);
+    AdmissionEnquiryResponse updateEnquiryStatus(UUID id, UpdateEnquiryStatusRequest request);
 
-    AdmissionEnquiryResponse updateEnquiryFollowUp(UUID schoolId, UUID id, UpdateEnquiryFollowUpRequest request);
+    AdmissionEnquiryResponse updateEnquiryFollowUp(UUID id, UpdateEnquiryFollowUpRequest request);
 }

@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -20,7 +19,7 @@ import java.util.UUID;
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, UUID> {
 
-    @Query("SELECT c FROM Complaint c WHERE c.schoolId = :schoolId AND c.academicYearId = :academicYearId " +
+    @Query("SELECT c FROM Complaint c WHERE c.academicYearId = :academicYearId " +
             "AND (:status IS NULL OR c.complaintStatus = :status) " +
             "AND (:complaintType IS NULL OR c.complaintType = :complaintType) " +
             "AND (:category IS NULL OR c.category LIKE %:category%) " +
@@ -29,7 +28,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, UUID> {
             "AND (:toDate IS NULL OR c.complaintDate <= :toDate) " +
             "AND (:search IS NULL OR c.complainantName LIKE %:search%)")
     Page<Complaint> findAllWithFilters(
-            @Param("schoolId") UUID schoolId,
             @Param("academicYearId") UUID academicYearId,
             @Param("status") ComplaintStatus status,
             @Param("complaintType") ComplaintType complaintType,
@@ -39,6 +37,4 @@ public interface ComplaintRepository extends JpaRepository<Complaint, UUID> {
             @Param("toDate") LocalDate toDate,
             @Param("search") String search,
             Pageable pageable);
-
-    Optional<Complaint> findByIdAndSchoolId(UUID id, UUID schoolId);
 }

@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -18,14 +17,13 @@ import java.util.UUID;
 @Repository
 public interface HalfDayNoticeRepository extends JpaRepository<HalfDayNotice, UUID> {
 
-    @Query("SELECT h FROM HalfDayNotice h WHERE h.schoolId = :schoolId AND h.academicYearId = :academicYearId " +
+    @Query("SELECT h FROM HalfDayNotice h WHERE h.academicYearId = :academicYearId " +
             "AND (:classId IS NULL OR h.classId = :classId) " +
             "AND (:sectionId IS NULL OR h.sectionId = :sectionId) " +
             "AND (:fromDate IS NULL OR CAST(h.outTime AS LocalDate) >= :fromDate) " +
             "AND (:toDate IS NULL OR CAST(h.outTime AS LocalDate) <= :toDate) " +
             "AND (:studentId IS NULL OR h.studentId = :studentId)")
     Page<HalfDayNotice> findAllWithFilters(
-            @Param("schoolId") UUID schoolId,
             @Param("academicYearId") UUID academicYearId,
             @Param("classId") Long classId,
             @Param("sectionId") Long sectionId,
@@ -33,6 +31,4 @@ public interface HalfDayNoticeRepository extends JpaRepository<HalfDayNotice, UU
             @Param("toDate") LocalDate toDate,
             @Param("studentId") Long studentId,
             Pageable pageable);
-
-    Optional<HalfDayNotice> findByIdAndSchoolId(UUID id, UUID schoolId);
 }

@@ -36,8 +36,6 @@ public class ComplaintController {
     @GetMapping
     @Operation(summary = "List complaints", description = "Retrieve a paginated list of complaints.")
     public ResponseEntity<ComplaintPageResponse> listComplaints(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by complaint status")
@@ -57,55 +55,47 @@ public class ComplaintController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         ComplaintPageResponse response = complaintService.listComplaints(
-                schoolId, academicYearId, status, complaintType, category, assignedToStaffId, fromDate, toDate, search, pageable);
+                academicYearId, status, complaintType, category, assignedToStaffId, fromDate, toDate, search, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "File complaint", description = "Record a new complaint.")
     public ResponseEntity<ComplaintResponse> createComplaint(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreateComplaintRequest request) {
 
-        ComplaintResponse response = complaintService.createComplaint(schoolId, academicYearId, request);
+        ComplaintResponse response = complaintService.createComplaint(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get complaint details", description = "Retrieve details of a specific complaint.")
     public ResponseEntity<ComplaintResponse> getComplaintById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        ComplaintResponse response = complaintService.getComplaintById(schoolId, id);
+        ComplaintResponse response = complaintService.getComplaintById(id);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/assign")
     @Operation(summary = "Assign complaint to staff", description = "Assign a complaint to a staff member for resolution.")
     public ResponseEntity<ComplaintResponse> assignComplaint(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id,
             @Valid @RequestBody AssignComplaintRequest request) {
 
-        ComplaintResponse response = complaintService.assignComplaint(schoolId, id, request);
+        ComplaintResponse response = complaintService.assignComplaint(id, request);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update complaint status", description = "Update the status and action taken for a complaint.")
     public ResponseEntity<ComplaintResponse> updateComplaintStatus(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateComplaintStatusRequest request) {
 
-        ComplaintResponse response = complaintService.updateComplaintStatus(schoolId, id, request);
+        ComplaintResponse response = complaintService.updateComplaintStatus(id, request);
         return ResponseEntity.ok(response);
     }
 }

@@ -36,7 +36,6 @@ public class HalfDayNoticeServiceImpl implements HalfDayNoticeService {
     @Override
     @Transactional(readOnly = true)
     public HalfDayNoticePageResponse listHalfDayNotices(
-            UUID schoolId,
             UUID academicYearId,
             UUID classId,
             UUID sectionId,
@@ -55,7 +54,7 @@ public class HalfDayNoticeServiceImpl implements HalfDayNoticeService {
         Long studentIdLong = studentId != null ? studentId.getMostSignificantBits() : null;
 
         Page<HalfDayNotice> page = halfDayNoticeRepository.findAllWithFilters(
-                schoolId, academicYearId, classIdLong, sectionIdLong, fromDate, toDate, studentIdLong, pageable);
+                academicYearId, classIdLong, sectionIdLong, fromDate, toDate, studentIdLong, pageable);
 
         return new HalfDayNoticePageResponse(
                 page.getContent().stream().map(halfDayNoticeMapper::toResponse).collect(Collectors.toList()),
@@ -64,7 +63,7 @@ public class HalfDayNoticeServiceImpl implements HalfDayNoticeService {
     }
 
     @Override
-    public HalfDayNoticeResponse createHalfDayNotice(UUID schoolId, UUID academicYearId, CreateHalfDayNoticeRequest request) {
+    public HalfDayNoticeResponse createHalfDayNotice(UUID academicYearId, CreateHalfDayNoticeRequest request) {
         // Validate out time is not in future
         if (request.getOutTime().isAfter(LocalDateTime.now())) {
             throw new BusinessRuleException("INVALID_OUT_TIME",
@@ -78,7 +77,7 @@ public class HalfDayNoticeServiceImpl implements HalfDayNoticeService {
                     "Out time must be during school hours (6:00 AM - 8:00 PM)");
         }
 
-        HalfDayNotice notice = halfDayNoticeMapper.toEntity(request, schoolId, academicYearId);
+        HalfDayNotice notice = halfDayNoticeMapper.toEntity(request, academicYearId);
 
         // TODO: Lookup student, class, section by UUID and set Long IDs
         // TODO: Validate student exists and belongs to the specified class/section
@@ -91,8 +90,8 @@ public class HalfDayNoticeServiceImpl implements HalfDayNoticeService {
 
     @Override
     @Transactional(readOnly = true)
-    public HalfDayNoticeResponse getHalfDayNoticeById(UUID schoolId, UUID id) {
-        HalfDayNotice notice = halfDayNoticeRepository.findByIdAndSchoolId(id, schoolId)
+    public HalfDayNoticeResponse getHalfDayNoticeById(UUID id) {
+        HalfDayNotice notice = halfDayNoticeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Half day notice not found with id: " + id));
         return halfDayNoticeMapper.toResponse(notice);
     }

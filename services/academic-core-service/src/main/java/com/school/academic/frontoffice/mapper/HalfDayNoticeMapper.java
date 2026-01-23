@@ -13,9 +13,8 @@ import java.util.UUID;
 @Component
 public class HalfDayNoticeMapper {
 
-    public HalfDayNotice toEntity(CreateHalfDayNoticeRequest request, UUID schoolId, UUID academicYearId) {
+    public HalfDayNotice toEntity(CreateHalfDayNoticeRequest request, UUID academicYearId) {
         HalfDayNotice notice = new HalfDayNotice();
-        notice.setSchoolId(schoolId);
         notice.setAcademicYearId(academicYearId);
         // Note: studentId, classId, sectionId are Long in entity but UUID in request
         // This will need adaptation in service layer to lookup actual IDs

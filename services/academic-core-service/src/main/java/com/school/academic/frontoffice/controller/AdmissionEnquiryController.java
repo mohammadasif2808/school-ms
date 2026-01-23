@@ -37,8 +37,6 @@ public class AdmissionEnquiryController {
     @GetMapping
     @Operation(summary = "List admission enquiries", description = "Retrieve a paginated list of admission enquiries.")
     public ResponseEntity<AdmissionEnquiryPageResponse> listAdmissionEnquiries(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Parameter(description = "Filter by enquiry status")
@@ -58,55 +56,47 @@ public class AdmissionEnquiryController {
             @PageableDefault(size = 20) Pageable pageable) {
 
         AdmissionEnquiryPageResponse response = admissionEnquiryService.listAdmissionEnquiries(
-                schoolId, academicYearId, status, source, enquiryType, fromDate, toDate, hasFollowUp, search, pageable);
+                academicYearId, status, source, enquiryType, fromDate, toDate, hasFollowUp, search, pageable);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Create admission enquiry", description = "Record a new admission enquiry.")
     public ResponseEntity<AdmissionEnquiryResponse> createAdmissionEnquiry(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @Parameter(description = "The academic year context for the request", required = true)
             @RequestHeader("X-Academic-Year-Id") UUID academicYearId,
             @Valid @RequestBody CreateAdmissionEnquiryRequest request) {
 
-        AdmissionEnquiryResponse response = admissionEnquiryService.createAdmissionEnquiry(schoolId, academicYearId, request);
+        AdmissionEnquiryResponse response = admissionEnquiryService.createAdmissionEnquiry(academicYearId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get admission enquiry details", description = "Retrieve details of a specific admission enquiry.")
     public ResponseEntity<AdmissionEnquiryResponse> getAdmissionEnquiryById(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id) {
 
-        AdmissionEnquiryResponse response = admissionEnquiryService.getAdmissionEnquiryById(schoolId, id);
+        AdmissionEnquiryResponse response = admissionEnquiryService.getAdmissionEnquiryById(id);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update admission enquiry status", description = "Update the status of an admission enquiry.")
     public ResponseEntity<AdmissionEnquiryResponse> updateEnquiryStatus(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEnquiryStatusRequest request) {
 
-        AdmissionEnquiryResponse response = admissionEnquiryService.updateEnquiryStatus(schoolId, id, request);
+        AdmissionEnquiryResponse response = admissionEnquiryService.updateEnquiryStatus(id, request);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/follow-up")
     @Operation(summary = "Update admission enquiry follow-up", description = "Update the follow-up dates of an admission enquiry.")
     public ResponseEntity<AdmissionEnquiryResponse> updateEnquiryFollowUp(
-            @Parameter(description = "The school context for the request", required = true)
-            @RequestHeader("X-School-Id") UUID schoolId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEnquiryFollowUpRequest request) {
 
-        AdmissionEnquiryResponse response = admissionEnquiryService.updateEnquiryFollowUp(schoolId, id, request);
+        AdmissionEnquiryResponse response = admissionEnquiryService.updateEnquiryFollowUp(id, request);
         return ResponseEntity.ok(response);
     }
 }
