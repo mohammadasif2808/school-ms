@@ -1,0 +1,24 @@
+# Ignore everything
+*
+
+# Do not ignore .gitignore itself
+!.gitignore
+
+# Do not ignore source directories and their contents
+!src/
+!src/**
+
+# Do not ignore pom.xml and other project files
+!pom.xml
+!Dockerfile
+!README.md
+!docs/
+!docs/**
+
+# Do not ignore jar files in any directory
+!*.jar
+!**/*.jar
+
+# Do not ignore target/ directory and jar files inside it
+!target/
+!target/*.jar
