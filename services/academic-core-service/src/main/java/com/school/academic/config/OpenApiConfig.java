@@ -18,7 +18,7 @@ public class OpenApiConfig {
                         .title("Academic Core Service API")
                         .description("API for managing the academic structure, people, and placements within the institution. Domain Model: v1.0 (FROZEN)")
                         .version("1.0.0"))
-                .servers(List.of(new Server().url("/api/v1").description("Base API path")));
+                .servers(List.of(new Server().url("/").description("Base API path")));
     }
 }
 
