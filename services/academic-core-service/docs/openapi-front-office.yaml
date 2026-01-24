@@ -1,0 +1,1597 @@
+# Status: DRAFT – OpenAPI Front Office v1
+openapi: 3.0.3
+info:
+  title: Academic Core Service – Front Office API
+  description: |
+    API for managing front office operations within the academic-core-service.
+    This module handles day-to-day administrative activities including:
+    - Visitors Log
+    - Phone Call Log
+    - Half Day Notices
+    - Postal Dispatch/Receive
+    - Admission Enquiries
+    - Complaints
+    
+    This is a single-school deployment. All operations are scoped to the current academic year.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Base API path
+
+tags:
+  - name: Visitors
+    description: Manage visitor entries and exits
+  - name: Phone Calls
+    description: Log incoming and outgoing phone calls
+  - name: Half Day Notices
+    description: Track student early departures
+  - name: Postal
+    description: Manage postal dispatch and receive records
+  - name: Admission Enquiries
+    description: Track prospective student enquiries
+  - name: Complaints
+    description: File and manage complaints
+
+paths:
+  # -------------------------------------------------------------------------
+  # VISITORS LOG
+  # -------------------------------------------------------------------------
+  /front-office/visitors:
+    get:
+      summary: List visitors
+      description: |
+        Retrieve a paginated list of visitors with optional filters.
+        Supports filtering by purpose, date range, and search by name/phone.
+      tags: [Visitors]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: purpose
+          in: query
+          schema:
+            type: string
+          description: Filter by visit purpose
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter visitors from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter visitors until this date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by visitor name or phone number
+        - name: checkedOut
+          in: query
+          schema:
+            type: boolean
+          description: Filter by checkout status (true = checked out, false = still in)
+      responses:
+        '200':
+          description: Paginated list of visitors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add visitor
+      description: Record a new visitor entry.
+      tags: [Visitors]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVisitorRequest'
+      responses:
+        '201':
+          description: Visitor recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/visitors/{id}:
+    get:
+      summary: Get visitor details
+      description: Retrieve details of a specific visitor entry.
+      tags: [Visitors]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Visitor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /front-office/visitors/{id}/checkout:
+    patch:
+      summary: Update visitor checkout time
+      description: Record the checkout time for a visitor.
+      tags: [Visitors]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisitorCheckoutRequest'
+      responses:
+        '200':
+          description: Checkout time updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # -------------------------------------------------------------------------
+  # PHONE CALL LOG
+  # -------------------------------------------------------------------------
+  /front-office/phone-calls:
+    get:
+      summary: List phone calls
+      description: |
+        Retrieve a paginated list of phone call logs.
+        Supports filtering by call type, date range, and follow-up date.
+      tags: [Phone Calls]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: callType
+          in: query
+          schema:
+            $ref: '#/components/schemas/CallTypeEnum'
+          description: Filter by call type (INCOMING/OUTGOING)
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter calls from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter calls until this date
+        - name: hasFollowUp
+          in: query
+          schema:
+            type: boolean
+          description: Filter calls with pending follow-up
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by caller name or phone number
+      responses:
+        '200':
+          description: Paginated list of phone calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneCallPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Log phone call
+      description: Record a new phone call entry.
+      tags: [Phone Calls]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePhoneCallRequest'
+      responses:
+        '201':
+          description: Phone call logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneCallResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/phone-calls/{id}:
+    get:
+      summary: Get phone call details
+      description: Retrieve details of a specific phone call log.
+      tags: [Phone Calls]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Phone call details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneCallResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # -------------------------------------------------------------------------
+  # HALF DAY NOTICES
+  # -------------------------------------------------------------------------
+  /front-office/half-day-notices:
+    get:
+      summary: List half day notices
+      description: |
+        Retrieve a paginated list of half day notices.
+        Supports filtering by class, section, and date.
+      tags: [Half Day Notices]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: classId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by class
+        - name: sectionId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by section
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter notices from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter notices until this date
+        - name: studentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific student
+      responses:
+        '200':
+          description: Paginated list of half day notices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HalfDayNoticePageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create half day notice
+      description: Record a student's early departure.
+      tags: [Half Day Notices]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHalfDayNoticeRequest'
+      responses:
+        '201':
+          description: Half day notice created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HalfDayNoticeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/half-day-notices/{id}:
+    get:
+      summary: Get half day notice details
+      description: Retrieve details of a specific half day notice.
+      tags: [Half Day Notices]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Half day notice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HalfDayNoticeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # -------------------------------------------------------------------------
+  # POSTAL DISPATCH / RECEIVE
+  # -------------------------------------------------------------------------
+  /front-office/postal-records:
+    get:
+      summary: List postal records
+      description: |
+        Retrieve a paginated list of postal dispatch and receive records.
+        Supports filtering by direction, postal type, and date.
+      tags: [Postal]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: direction
+          in: query
+          schema:
+            $ref: '#/components/schemas/PostalDirectionEnum'
+          description: Filter by direction (RECEIVED/DISPATCHED)
+        - name: postalType
+          in: query
+          schema:
+            $ref: '#/components/schemas/PostalTypeEnum'
+          description: Filter by postal type (Letter/Parcel/Courier)
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter records from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter records until this date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by reference number, sender, or receiver
+      responses:
+        '200':
+          description: Paginated list of postal records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostalRecordPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add postal record
+      description: Record a new postal dispatch or receive entry.
+      tags: [Postal]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostalRecordRequest'
+      responses:
+        '201':
+          description: Postal record created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostalRecordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/postal-records/{id}:
+    get:
+      summary: Get postal record details
+      description: Retrieve details of a specific postal record.
+      tags: [Postal]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Postal record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostalRecordResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # -------------------------------------------------------------------------
+  # ADMISSION ENQUIRIES
+  # -------------------------------------------------------------------------
+  /front-office/admission-enquiries:
+    get:
+      summary: List admission enquiries
+      description: |
+        Retrieve a paginated list of admission enquiries.
+        Supports filtering by status, source, date, and follow-up tracking.
+      tags: [Admission Enquiries]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/EnquiryStatusEnum'
+          description: Filter by enquiry status
+        - name: source
+          in: query
+          schema:
+            $ref: '#/components/schemas/EnquirySourceEnum'
+          description: Filter by enquiry source
+        - name: enquiryType
+          in: query
+          schema:
+            $ref: '#/components/schemas/EnquiryTypeEnum'
+          description: Filter by enquirer type
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter enquiries from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter enquiries until this date
+        - name: hasFollowUp
+          in: query
+          schema:
+            type: boolean
+          description: Filter enquiries with pending follow-up
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by enquirer name or phone number
+      responses:
+        '200':
+          description: Paginated list of admission enquiries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionEnquiryPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create admission enquiry
+      description: Record a new admission enquiry.
+      tags: [Admission Enquiries]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdmissionEnquiryRequest'
+      responses:
+        '201':
+          description: Admission enquiry created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionEnquiryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/admission-enquiries/{id}:
+    get:
+      summary: Get admission enquiry details
+      description: Retrieve details of a specific admission enquiry.
+      tags: [Admission Enquiries]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Admission enquiry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionEnquiryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /front-office/admission-enquiries/{id}/status:
+    patch:
+      summary: Update admission enquiry status
+      description: Update the status of an admission enquiry.
+      tags: [Admission Enquiries]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEnquiryStatusRequest'
+      responses:
+        '200':
+          description: Enquiry status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionEnquiryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /front-office/admission-enquiries/{id}/follow-up:
+    patch:
+      summary: Update admission enquiry follow-up
+      description: Update the follow-up dates of an admission enquiry.
+      tags: [Admission Enquiries]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEnquiryFollowUpRequest'
+      responses:
+        '200':
+          description: Follow-up dates updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdmissionEnquiryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # -------------------------------------------------------------------------
+  # COMPLAINTS
+  # -------------------------------------------------------------------------
+  /front-office/complaints:
+    get:
+      summary: List complaints
+      description: |
+        Retrieve a paginated list of complaints.
+        Supports filtering by status, complaint type, category, and assigned staff.
+      tags: [Complaints]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComplaintStatusEnum'
+          description: Filter by complaint status
+        - name: complaintType
+          in: query
+          schema:
+            $ref: '#/components/schemas/ComplaintTypeEnum'
+          description: Filter by complaint type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by complaint category
+        - name: assignedToStaffId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by assigned staff member
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter complaints from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter complaints until this date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by complainant name
+      responses:
+        '200':
+          description: Paginated list of complaints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: File complaint
+      description: Record a new complaint.
+      tags: [Complaints]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - $ref: '#/components/parameters/AcademicYearIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComplaintRequest'
+      responses:
+        '201':
+          description: Complaint filed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /front-office/complaints/{id}:
+    get:
+      summary: Get complaint details
+      description: Retrieve details of a specific complaint.
+      tags: [Complaints]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Complaint details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /front-office/complaints/{id}/assign:
+    patch:
+      summary: Assign complaint to staff
+      description: Assign a complaint to a staff member for resolution.
+      tags: [Complaints]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignComplaintRequest'
+      responses:
+        '200':
+          description: Complaint assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /front-office/complaints/{id}/status:
+    patch:
+      summary: Update complaint status
+      description: Update the status and action taken for a complaint.
+      tags: [Complaints]
+      parameters:
+        - $ref: '#/components/parameters/SchoolIdHeader'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateComplaintStatusRequest'
+      responses:
+        '200':
+          description: Complaint status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+# =============================================================================
+# COMPONENTS
+# =============================================================================
+components:
+  # ---------------------------------------------------------------------------
+  # PARAMETERS
+  # ---------------------------------------------------------------------------
+  parameters:
+    SchoolIdHeader:
+      name: X-School-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The school context for the request
+
+    AcademicYearIdHeader:
+      name: X-Academic-Year-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The academic year context for the request
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Page number (0-indexed)
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+      description: Sort criteria (e.g., 'createdAt,desc')
+
+  # ---------------------------------------------------------------------------
+  # RESPONSES
+  # ---------------------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: Bad request - validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: Conflict - operation not allowed in current state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
+  # SCHEMAS
+  # ---------------------------------------------------------------------------
+  schemas:
+    # --- Common ---
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    PageMetadata:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number (0-indexed)
+        size:
+          type: integer
+          description: Number of items per page
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          description: Total number of pages
+
+    # --- Enums ---
+    FrontOfficeStatusEnum:
+      type: string
+      enum: [ACTIVE, CLOSED, ARCHIVED]
+      description: Status for front office records
+
+    CallTypeEnum:
+      type: string
+      enum: [INCOMING, OUTGOING]
+      description: Type of phone call
+
+    PostalDirectionEnum:
+      type: string
+      enum: [RECEIVED, DISPATCHED]
+      description: Direction of postal record
+
+    PostalTypeEnum:
+      type: string
+      enum: [LETTER, PARCEL, COURIER]
+      description: Type of postal item
+
+    EnquiryStatusEnum:
+      type: string
+      enum: [NEW, FOLLOW_UP, CONVERTED, CLOSED]
+      description: Status of admission enquiry
+
+    EnquirySourceEnum:
+      type: string
+      enum: [WEBSITE, WALK_IN, CALL, REFERRAL, OTHER]
+      description: Source of admission enquiry
+
+    EnquiryTypeEnum:
+      type: string
+      enum: [PARENT, STUDENT, OTHER]
+      description: Type of enquirer
+
+    ComplaintStatusEnum:
+      type: string
+      enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+      description: Status of complaint
+
+    ComplaintTypeEnum:
+      type: string
+      enum: [PARENT, STUDENT, STAFF]
+      description: Type of complainant
+
+    # --- Visitors ---
+    VisitorResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        visitorName:
+          type: string
+        phoneNumber:
+          type: string
+        purpose:
+          type: string
+        numberOfPersons:
+          type: integer
+        idProofType:
+          type: string
+          nullable: true
+        idProofNumber:
+          type: string
+          nullable: true
+        checkInTime:
+          type: string
+          format: date-time
+        checkOutTime:
+          type: string
+          format: date-time
+          nullable: true
+        remarks:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/FrontOfficeStatusEnum'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    CreateVisitorRequest:
+      type: object
+      required: [visitorName, phoneNumber, purpose, numberOfPersons, checkInTime]
+      properties:
+        visitorName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phoneNumber:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+        purpose:
+          type: string
+          minLength: 2
+          maxLength: 255
+        numberOfPersons:
+          type: integer
+          minimum: 1
+          default: 1
+        idProofType:
+          type: string
+          maxLength: 50
+        idProofNumber:
+          type: string
+          maxLength: 50
+        checkInTime:
+          type: string
+          format: date-time
+        remarks:
+          type: string
+          maxLength: 500
+
+    VisitorCheckoutRequest:
+      type: object
+      required: [checkOutTime]
+      properties:
+        checkOutTime:
+          type: string
+          format: date-time
+        remarks:
+          type: string
+          maxLength: 500
+
+    VisitorPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitorResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # --- Phone Calls ---
+    PhoneCallResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        callerName:
+          type: string
+        phoneNumber:
+          type: string
+        callDate:
+          type: string
+          format: date
+        callType:
+          $ref: '#/components/schemas/CallTypeEnum'
+        callDuration:
+          type: integer
+          description: Duration in minutes
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        nextFollowUpDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/FrontOfficeStatusEnum'
+        remarks:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    CreatePhoneCallRequest:
+      type: object
+      required: [callerName, phoneNumber, callDate, callType]
+      properties:
+        callerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phoneNumber:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+        callDate:
+          type: string
+          format: date
+        callType:
+          $ref: '#/components/schemas/CallTypeEnum'
+        callDuration:
+          type: integer
+          minimum: 0
+          description: Duration in minutes
+        description:
+          type: string
+          maxLength: 1000
+        nextFollowUpDate:
+          type: string
+          format: date
+        remarks:
+          type: string
+          maxLength: 500
+
+    PhoneCallPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhoneCallResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # --- Half Day Notices ---
+    HalfDayNoticeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        studentName:
+          type: string
+          description: Denormalized for display
+        classId:
+          type: string
+          format: uuid
+        className:
+          type: string
+          description: Denormalized for display
+        sectionId:
+          type: string
+          format: uuid
+        sectionName:
+          type: string
+          description: Denormalized for display
+        outTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        guardianName:
+          type: string
+        guardianPhone:
+          type: string
+        status:
+          $ref: '#/components/schemas/FrontOfficeStatusEnum'
+        remarks:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    CreateHalfDayNoticeRequest:
+      type: object
+      required: [studentId, classId, sectionId, outTime, reason, guardianName, guardianPhone]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        classId:
+          type: string
+          format: uuid
+        sectionId:
+          type: string
+          format: uuid
+        outTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 500
+        guardianName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        guardianPhone:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+        remarks:
+          type: string
+          maxLength: 500
+
+    HalfDayNoticePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/HalfDayNoticeResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # --- Postal Records ---
+    PostalRecordResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        direction:
+          $ref: '#/components/schemas/PostalDirectionEnum'
+        postalType:
+          $ref: '#/components/schemas/PostalTypeEnum'
+        referenceNumber:
+          type: string
+          nullable: true
+        fromTitle:
+          type: string
+        toTitle:
+          type: string
+        courierName:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        attachmentUrl:
+          type: string
+          format: uri
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/FrontOfficeStatusEnum'
+        remarks:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    CreatePostalRecordRequest:
+      type: object
+      required: [direction, postalType, fromTitle, toTitle, date]
+      properties:
+        direction:
+          $ref: '#/components/schemas/PostalDirectionEnum'
+        postalType:
+          $ref: '#/components/schemas/PostalTypeEnum'
+        referenceNumber:
+          type: string
+          maxLength: 100
+        fromTitle:
+          type: string
+          minLength: 2
+          maxLength: 200
+        toTitle:
+          type: string
+          minLength: 2
+          maxLength: 200
+        courierName:
+          type: string
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        attachmentUrl:
+          type: string
+          format: uri
+        notes:
+          type: string
+          maxLength: 1000
+        remarks:
+          type: string
+          maxLength: 500
+
+    PostalRecordPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostalRecordResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # --- Admission Enquiries ---
+    AdmissionEnquiryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        enquirerName:
+          type: string
+        phoneNumber:
+          type: string
+        enquiryType:
+          $ref: '#/components/schemas/EnquiryTypeEnum'
+        source:
+          $ref: '#/components/schemas/EnquirySourceEnum'
+        enquiryDate:
+          type: string
+          format: date
+        description:
+          type: string
+          nullable: true
+        lastFollowUpDate:
+          type: string
+          format: date
+          nullable: true
+        nextFollowUpDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EnquiryStatusEnum'
+        remarks:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          format: uuid
+
+    CreateAdmissionEnquiryRequest:
+      type: object
+      required: [enquirerName, phoneNumber, enquiryType, source, enquiryDate]
+      properties:
+        enquirerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phoneNumber:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+        enquiryType:
+          $ref: '#/components/schemas/EnquiryTypeEnum'
+        source:
+          $ref: '#/components/schemas/EnquirySourceEnum'
+        enquiryDate:
+          type: string
+          format: date
+        description:
+          type: string
+          maxLength: 1000
+        nextFollowUpDate:
+          type: string
+          format: date
+        remarks:
+          type: string
+          maxLength: 500
+
+    UpdateEnquiryStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/EnquiryStatusEnum'
+        remarks:
+          type: string
+          maxLength: 500
+
+    UpdateEnquiryFollowUpRequest:
+      type: object
+      properties:
+        lastFollowUpDate:
+          type: string
+          format: date
+        nextFollowUpDate:
+          type: string
+          format: date
+        remarks:
+          type: string
+          maxLength: 500
+
+    AdmissionEnquiryPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdmissionEnquiryResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # --- Complaints ---
+    ComplaintResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        complainantName:
+          type: string
+        complaintType:
+          $ref: '#/components/schemas/ComplaintTypeEnum'
+        category:
+          type: string
+        complaintDate:
+          type: string
+          format: date
+        description:
+          type: string
+        actionTaken:
+          type: string
+          nullable: true
+        assignedToStaffId:
+          type: string
+          format: uuid
+          nullable: true
+        assignedToStaffName:
+          type: string
+          nullable: true
+          description: Denormalized for display
+        internalNote:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ComplaintStatusEnum'
+        remarks:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          format: uuid
+
+    CreateComplaintRequest:
+      type: object
+      required: [complainantName, complaintType, category, complaintDate, description]
+      properties:
+        complainantName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        complaintType:
+          $ref: '#/components/schemas/ComplaintTypeEnum'
+        category:
+          type: string
+          minLength: 2
+          maxLength: 100
+        complaintDate:
+          type: string
+          format: date
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        internalNote:
+          type: string
+          maxLength: 1000
+        remarks:
+          type: string
+          maxLength: 500
+
+    AssignComplaintRequest:
+      type: object
+      required: [assignedToStaffId]
+      properties:
+        assignedToStaffId:
+          type: string
+          format: uuid
+        internalNote:
+          type: string
+          maxLength: 1000
+
+    UpdateComplaintStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ComplaintStatusEnum'
+        actionTaken:
+          type: string
+          maxLength: 2000
+        internalNote:
+          type: string
+          maxLength: 1000
+        remarks:
+          type: string
+          maxLength: 500
+
+    ComplaintPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplaintResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'

@@ -127,9 +127,9 @@ The system is built using:
 - Class, section, subject
 - Academic year
 - Timetable
+- Front Office operations (Visitors, Phone Calls, Half Day Notices, Postal, Admission Enquiries, Complaints)
 
 This is the system of record for academic entities.
-
 ### 3.3 Attendance Context
 
 **Service:** attendance-service
@@ -224,6 +224,16 @@ _Attendance service never owns student data, only references IDs._
   - Exam results
   - Fee due reminders
 - Notifications can be asynchronous
+
+### 4.7 Front Office Management
+
+- Admin can log visitor entries and checkout times
+- Admin can record incoming and outgoing phone calls with follow-up tracking
+- Admin can record student half-day departure notices with guardian details
+- Admin can manage postal dispatch and receive records
+- Admin can track admission enquiries with status and follow-up management
+- Admin can file and assign complaints to staff members
+- All front office records must be scoped to school and academic year
 
 ---
 
@@ -442,12 +452,20 @@ AI agents must:
 - ✅ DTO-based API contracts
 - ✅ Role-based authorization (Role, Permission entities)
 - ✅ Password hashing with bcrypt
-- ⚠️ **NOTE:** No explicit Flyway migration setup (relies on Hibernate DDL-auto in local)
-  - **Action:** Future versions should migrate to Flyway for production-grade schema versioning
-- ⚠️ **NOTE:** Database schema not explicitly defined in @Table annotations (defaults to root schema)
-  - **Action:** Recommend using `@Table(name = "users", schema = "identity_service")` pattern for clarity
 - ✅ Actuator endpoints configured with proper exposure limits
 - ✅ Separate application profiles for local and production (application-local.yml, application-prod.yml)
+- ✅ HikariCP connection pooling configured (max-pool-size: 10 local, 20 prod)
+- ✅ Internal API endpoint placeholder exists (`/internal` prefix)
+- ⚠️ **ISSUE:** No Flyway migration setup (relies on Hibernate DDL-auto)
+  - **Risk:** Schema changes are not version-controlled
+  - **Action Required:** Add Flyway dependency and create migration scripts before production
+- ⚠️ **ISSUE:** Database schema not explicitly defined in @Table annotations
+  - **Risk:** Tables created in default schema instead of `identity_service` schema
+  - **Action Required:** Add `schema = "identity_service"` to all @Table annotations
+- ⚠️ **ISSUE:** identity-service uses hardcoded local DB config (application-local.yml)
+  - **Current:** `url: jdbc:mysql://localhost:3306/identity_service`
+  - **Should be:** `url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:identity_service}`
+  - **Action Required:** Use environment variables for consistency with academic-core-service
 
 ### 13.2 Academic-Core-Service Compliance
 
@@ -455,15 +473,24 @@ AI agents must:
 
 - ✅ Java 17 + Spring Boot 3.2.1
 - ✅ Proper schema-per-service implementation (`academic_core` schema explicitly defined)
-- ✅ Flyway migration framework configured correctly
+- ✅ Flyway migration framework configured correctly (13 migration scripts)
 - ✅ Database configuration uses environment variables (DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME)
 - ✅ Constructor injection enforced
 - ✅ DTO-based API contracts (StudentResponse, CreateStudentRequest, etc.)
-- ✅ Controller → Service → Repository pattern
+- ✅ Controller → Service → Repository pattern (7 controllers, 7 service interfaces with impl)
 - ✅ Actuator endpoints configured
 - ✅ Prometheus metrics support
 - ✅ HikariCP connection pooling (max-pool-size: 10)
-- ✅ Separate profiles for local and production
+- ✅ Separate profiles for local and production (via YAML multi-document)
+- ✅ OpenAPI/Swagger documentation configured
+- ✅ Front Office module OpenAPI spec created (`docs/openapi-front-office.yaml`)
+
+**Entities Implemented:**
+- AcademicYear, GradeClass, Section, ClassSection
+- Student, Parent, StudentParent (guardian mapping)
+- Staff, StaffAssignment
+- Subject, SubjectAssignment
+- Classroom, Enrollment
 
 ### 13.3 Critical Implementation Notes for Future Services
 
@@ -486,6 +513,8 @@ AI agents must:
 
 5. **Health Checks:** Ensure `/actuator/health` includes database component status
 
+6. **Service Interface Pattern:** Define service interfaces with separate impl classes (as in academic-core-service)
+
 ### 13.4 API Gateway Implementation Status
 
 **Status:** ⏳ PENDING
@@ -497,3 +526,29 @@ AI agents must:
   - Request routing to downstream services
   - Rate limiting (future)
   - Request/response logging (future)
+
+### 13.5 SRS Compliance Summary
+
+| Service | Java 17 | Spring Boot 3.x | Flyway | Schema-per-Service | Env Vars | Constructor DI | DTO APIs |
+|---------|---------|-----------------|--------|-------------------|----------|----------------|----------|
+| identity-service | ✅ | ✅ 3.2.0 | ❌ | ❌ | ⚠️ Partial | ✅ | ✅ |
+| academic-core-service | ✅ | ✅ 3.2.1 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| api-gateway | ⏳ | ⏳ | N/A | N/A | ⏳ | ⏳ | ⏳ |
+
+### 13.6 Recommended Actions Before Production
+
+**identity-service (Priority: HIGH)**
+1. Add Flyway dependency and create migration scripts for existing entities
+2. Add explicit schema annotation: `@Table(name = "users", schema = "identity_service")`
+3. Update application-local.yml to use environment variables for DB config
+4. Implement `/internal/validate-token` endpoint for API Gateway
+
+**academic-core-service (Priority: MEDIUM)**
+1. Implement Front Office module entities based on `openapi-front-office.yaml`
+2. Create Flyway migrations for Front Office tables (V0014+)
+
+**api-gateway (Priority: HIGH)**
+1. Initialize Spring Cloud Gateway project
+2. Configure JWT validation filter
+3. Configure service routing
+
