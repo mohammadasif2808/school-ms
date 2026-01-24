@@ -23,7 +23,7 @@ public class Complaint extends FrontOfficeBaseEntity {
     private String complainantName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "complaint_type", nullable = false, length = 20)
+    @Column(name = "complaint_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private ComplaintType complaintType;
 
     @Column(name = "category", nullable = false, length = 100)
