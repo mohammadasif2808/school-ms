@@ -19,7 +19,7 @@ public abstract class FrontOfficeBaseEntity {
     private UUID academicYearId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 32, nullable = false)
+    @Column(name = "status", length = 32, nullable = false, columnDefinition = "VARCHAR(32)")
     private FrontOfficeStatus status = FrontOfficeStatus.ACTIVE;
 
     @Column(name = "remarks", length = 500)
