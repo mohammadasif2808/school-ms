@@ -1,8 +1,0 @@
-com\school\academic\service\AcademicStructureServiceTest$ClassTests.class
-com\school\academic\service\AcademicStructureServiceTest$AcademicYearTests.class
-com\school\academic\service\AcademicStructureServiceTest.class
-com\school\academic\service\EnrollmentServiceTest$OneEnrollmentPerYearTests.class
-com\school\academic\service\EnrollmentServiceTest.class
-com\school\academic\service\AcademicStructureServiceTest$SectionTests.class
-com\school\academic\service\EnrollmentServiceTest$CreateEnrollmentTests.class
-com\school\academic\service\EnrollmentServiceTest$RollNumberInvariantTests.class

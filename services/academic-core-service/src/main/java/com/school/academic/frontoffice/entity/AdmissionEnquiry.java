@@ -27,11 +27,11 @@ public class AdmissionEnquiry extends FrontOfficeBaseEntity {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "enquiry_type", nullable = false, length = 20)
+    @Column(name = "enquiry_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private EnquiryType enquiryType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "source", nullable = false, length = 20)
+    @Column(name = "source", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private EnquirySource source;
 
     @Column(name = "enquiry_date", nullable = false)
