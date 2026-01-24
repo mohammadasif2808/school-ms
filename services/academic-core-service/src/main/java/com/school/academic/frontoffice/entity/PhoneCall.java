@@ -28,7 +28,7 @@ public class PhoneCall extends FrontOfficeBaseEntity {
     private LocalDate callDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "call_type", nullable = false, length = 20)
+    @Column(name = "call_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private CallType callType;
 
     @Column(name = "call_duration")

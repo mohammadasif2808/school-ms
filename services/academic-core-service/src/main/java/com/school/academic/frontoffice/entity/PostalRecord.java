@@ -20,11 +20,11 @@ public class PostalRecord extends FrontOfficeBaseEntity {
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "direction", nullable = false, length = 20)
+    @Column(name = "direction", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private PostalDirection direction;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "postal_type", nullable = false, length = 20)
+    @Column(name = "postal_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private PostalType postalType;
 
     @Column(name = "reference_number", length = 100)

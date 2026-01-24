@@ -47,7 +47,7 @@ public class AdmissionEnquiry extends FrontOfficeBaseEntity {
     private LocalDate nextFollowUpDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "enquiry_status", nullable = false, length = 20)
+    @Column(name = "enquiry_status", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private EnquiryStatus enquiryStatus = EnquiryStatus.NEW;
 
     // Constructors

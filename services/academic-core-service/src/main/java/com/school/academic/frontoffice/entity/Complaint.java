@@ -48,7 +48,7 @@ public class Complaint extends FrontOfficeBaseEntity {
     private String internalNote;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "complaint_status", nullable = false, length = 20)
+    @Column(name = "complaint_status", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private ComplaintStatus complaintStatus = ComplaintStatus.OPEN;
 
     // Constructors
