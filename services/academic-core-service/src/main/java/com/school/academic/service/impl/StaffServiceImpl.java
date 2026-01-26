@@ -57,11 +57,48 @@ public class StaffServiceImpl implements StaffService {
         staff.setUserId(request.getUserId());
         staff.setFirstName(request.getFirstName());
         staff.setLastName(request.getLastName());
+        staff.setGender(request.getGender());
+        staff.setDateOfBirth(request.getDateOfBirth());
         staff.setDesignation(request.getDesignation());
         staff.setQualification(request.getQualification());
+        staff.setProfessionalQualification(request.getProfessionalQualification());
+        staff.setWorkExperience(request.getWorkExperience());
         staff.setMobile(request.getMobile());
         staff.setEmail(request.getEmail());
-        staff.setStatus("ACTIVE");
+        staff.setJoiningDate(request.getJoiningDate());
+        staff.setAadharNumber(request.getAadharNumber());
+        staff.setBloodGroup(request.getBloodGroup());
+        staff.setMaritalStatus(request.getMaritalStatus());
+        staff.setFatherName(request.getFatherName());
+        staff.setMotherName(request.getMotherName());
+        staff.setStaffType(request.getStaffType());
+
+        // Permanent Address
+        staff.setPermanentAddress(request.getPermanentAddress());
+        staff.setPermanentCity(request.getPermanentCity());
+        staff.setPermanentState(request.getPermanentState());
+        staff.setPermanentPostalCode(request.getPermanentPostalCode());
+
+        // Current Address
+        staff.setCurrentAddress(request.getCurrentAddress());
+        staff.setCurrentCity(request.getCurrentCity());
+        staff.setCurrentState(request.getCurrentState());
+        staff.setCurrentPostalCode(request.getCurrentPostalCode());
+
+        // Social Media
+        staff.setFacebookUrl(request.getFacebookUrl());
+        staff.setTwitterUrl(request.getTwitterUrl());
+        staff.setLinkedinUrl(request.getLinkedinUrl());
+        staff.setInstagramUrl(request.getInstagramUrl());
+
+        // Notes
+        staff.setNotes(request.getNotes());
+
+        // File URLs
+        staff.setPhotoUrl(request.getPhotoUrl());
+        staff.setResumeUrl(request.getResumeUrl());
+
+        staff.setStatus(request.getStatus() != null ? request.getStatus() : "ACTIVE");
 
         Staff saved = staffRepository.save(staff);
         log.info("Created staff with id: {}", saved.getId());
@@ -98,10 +135,48 @@ public class StaffServiceImpl implements StaffService {
         response.setEmployeeId(entity.getStaffCode());
         response.setFirstName(entity.getFirstName());
         response.setLastName(entity.getLastName());
+        response.setGender(entity.getGender());
+        response.setDateOfBirth(entity.getDateOfBirth());
         response.setDesignation(entity.getDesignation());
         response.setQualification(entity.getQualification());
+        response.setProfessionalQualification(entity.getProfessionalQualification());
+        response.setWorkExperience(entity.getWorkExperience());
         response.setMobile(entity.getMobile());
         response.setEmail(entity.getEmail());
+        response.setJoiningDate(entity.getJoiningDate());
+        response.setAadharNumber(entity.getAadharNumber());
+        response.setBloodGroup(entity.getBloodGroup());
+        response.setMaritalStatus(entity.getMaritalStatus());
+        response.setFatherName(entity.getFatherName());
+        response.setMotherName(entity.getMotherName());
+        response.setStaffType(entity.getStaffType());
+
+        // Permanent Address
+        response.setPermanentAddress(entity.getPermanentAddress());
+        response.setPermanentCity(entity.getPermanentCity());
+        response.setPermanentState(entity.getPermanentState());
+        response.setPermanentPostalCode(entity.getPermanentPostalCode());
+
+        // Current Address
+        response.setCurrentAddress(entity.getCurrentAddress());
+        response.setCurrentCity(entity.getCurrentCity());
+        response.setCurrentState(entity.getCurrentState());
+        response.setCurrentPostalCode(entity.getCurrentPostalCode());
+
+        // Social Media
+        response.setFacebookUrl(entity.getFacebookUrl());
+        response.setTwitterUrl(entity.getTwitterUrl());
+        response.setLinkedinUrl(entity.getLinkedinUrl());
+        response.setInstagramUrl(entity.getInstagramUrl());
+
+        // Notes
+        response.setNotes(entity.getNotes());
+
+        // File URLs
+        response.setPhotoUrl(entity.getPhotoUrl());
+        response.setResumeUrl(entity.getResumeUrl());
+
+        response.setStatus(entity.getStatus());
         return response;
     }
 
