@@ -8,6 +8,8 @@ public class CreateClassroomRequest {
     @NotBlank(message = "Room number is required")
     private String roomNumber;
 
+    private String name;
+
     @NotNull(message = "Capacity is required")
     private Integer capacity;
 
@@ -16,14 +18,18 @@ public class CreateClassroomRequest {
 
     private String buildingBlock;
 
+    private String status;
+
     public CreateClassroomRequest() {
     }
 
-    public CreateClassroomRequest(String roomNumber, Integer capacity, String infraType, String buildingBlock) {
+    public CreateClassroomRequest(String roomNumber, String name, Integer capacity, String infraType, String buildingBlock, String status) {
         this.roomNumber = roomNumber;
+        this.name = name;
         this.capacity = capacity;
         this.infraType = infraType;
         this.buildingBlock = buildingBlock;
+        this.status = status;
     }
 
     public String getRoomNumber() {
@@ -32,6 +38,14 @@ public class CreateClassroomRequest {
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Integer getCapacity() {
@@ -56,6 +70,14 @@ public class CreateClassroomRequest {
 
     public void setBuildingBlock(String buildingBlock) {
         this.buildingBlock = buildingBlock;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

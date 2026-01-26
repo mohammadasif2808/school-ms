@@ -47,10 +47,11 @@ public class ClassroomServiceImpl implements ClassroomService {
 
         Classroom classroom = new Classroom();
         classroom.setRoomNumber(request.getRoomNumber());
+        classroom.setName(request.getName());
         classroom.setCapacity(request.getCapacity());
         classroom.setInfraType(request.getInfraType());
         classroom.setBuildingBlock(request.getBuildingBlock());
-        classroom.setStatus("ACTIVE");
+        classroom.setStatus(request.getStatus() != null ? request.getStatus() : "ACTIVE");
 
         Classroom saved = classroomRepository.save(classroom);
         log.info("Created classroom with id: {}", saved.getId());
@@ -64,9 +65,11 @@ public class ClassroomServiceImpl implements ClassroomService {
         ClassroomResponse response = new ClassroomResponse();
         response.setId(longToUuid(entity.getId()));
         response.setRoomNumber(entity.getRoomNumber());
+        response.setName(entity.getName());
         response.setCapacity(entity.getCapacity());
         response.setInfraType(entity.getInfraType());
         response.setBuildingBlock(entity.getBuildingBlock());
+        response.setStatus(entity.getStatus());
         return response;
     }
 
